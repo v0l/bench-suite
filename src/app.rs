@@ -229,10 +229,17 @@ impl Hub {
         };
         let path = path.map(|p| std::fs::canonicalize(&p).unwrap_or(p));
         let mut cmd = Command::new(&exe);
+        let log = install::log(slot.tool);
+        let stderr = log
+            .parent()
+            .and_then(|d| std::fs::create_dir_all(d).ok())
+            .and_then(|()| std::fs::File::create(&log).ok())
+            .map(Stdio::from)
+            .unwrap_or_else(Stdio::null);
         cmd.args(slot.tool.args(path.as_deref()))
             .stdin(Stdio::null())
             .stdout(Stdio::null())
-            .stderr(Stdio::null());
+            .stderr(stderr);
         if let Some(dir) = working_dir(path.as_deref()) {
             cmd.current_dir(dir);
         }
@@ -272,12 +279,14 @@ impl Hub {
                     _ => {}
                 }
             }
-            let title = slot.tool.title;
+            let tool = slot.tool;
             slot.running.retain_mut(|child| match child.try_wait() {
                 Ok(None) => true,
                 Ok(Some(code)) => {
                     if !code.success() {
-                        said = Some(format!("{title} stopped: {code}"));
+                        let why =
+                            last_words(&install::log(tool)).unwrap_or_else(|| code.to_string());
+                        said = Some(format!("{} stopped: {why}", tool.title));
                     }
                     false
                 }
@@ -427,6 +436,19 @@ fn recent_key(tool: &Tool) -> String {
     format!("recent.{}", tool.name)
 }
 
+fn last_words(log: &Path) -> Option<String> {
+    let text = std::fs::read_to_string(log).ok()?;
+    let line = text
+        .lines()
+        .map(str::trim)
+        .rfind(|l| !l.is_empty() && !l.starts_with("note:") && !l.starts_with("thread '"))?;
+    let mut line = line.to_string();
+    if line.chars().count() > 140 {
+        line = line.chars().take(140).collect::<String>() + "…";
+    }
+    Some(line)
+}
+
 pub fn file_label(path: &Path) -> String {
     path.file_name()
         .map(|n| n.to_string_lossy().into_owned())
@@ -450,3 +472,20 @@ fn no_console(cmd: &mut Command) {
 
 #[cfg(not(windows))]
 fn no_console(_cmd: &mut Command) {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_crash_is_reported_by_its_message() {
+        let log = std::env::temp_dir().join(format!("bench-last-words-{}", std::process::id()));
+        std::fs::write(
+            &log,
+            "\nthread 'main' (1) panicked at crates/x/src/levels.rs:228:36:\nno entry found for key\nnote: run with `RUST_BACKTRACE=1`\n",
+        )
+        .unwrap();
+        assert_eq!(last_words(&log).as_deref(), Some("no entry found for key"));
+        std::fs::remove_file(&log).unwrap();
+    }
+}

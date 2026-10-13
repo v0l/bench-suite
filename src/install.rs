@@ -16,6 +16,10 @@ pub fn cache() -> PathBuf {
     dirs::cache_dir().unwrap_or_else(std::env::temp_dir).join("bench-suite").join("releases")
 }
 
+pub fn log(tool: &Tool) -> PathBuf {
+    cache().parent().unwrap_or(&cache()).join("logs").join(format!("{}.log", tool.name))
+}
+
 pub fn home(tool: &Tool) -> PathBuf {
     root().join(tool.name)
 }

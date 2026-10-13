@@ -101,8 +101,12 @@ impl Hub {
                     acts.push(Act::Check);
                 }
                 ui.add_space(8.0);
+                let room = (ui.available_width() - 16.0).min(240.0);
+                if room < 120.0 {
+                    return;
+                }
                 ui.scope(|ui| {
-                    ui.set_width(240.0);
+                    ui.set_width(room);
                     let r = egui_bench::form::field(ui, &mut self.search, "search tools");
                     let id = r.id;
                     ui.ctx().data_mut(|d| d.insert_temp(search_id(), id));
@@ -294,6 +298,10 @@ impl Hub {
     }
 
     fn filter_row(&mut self, ui: &mut Ui, acts: &mut Vec<Act>) {
+        let pending = self.pending();
+        let all = Key::new(format!("install all ({pending})")).solid(READOUT);
+        let all_w = all.width(ui);
+        let mut below = false;
         ui.horizontal(|ui| {
             let options = [
                 (Filter::All, "all", Some(self.count(Filter::All))),
@@ -302,18 +310,21 @@ impl Hub {
                 (Filter::Missing, "not installed", Some(self.count(Filter::Missing))),
             ];
             segments(ui, &mut self.filter, &options);
+            if pending == 0 {
+                return;
+            }
+            if ui.available_width() < all_w + 16.0 {
+                below = true;
+                return;
+            }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let pending = self.pending();
-                if pending > 0 {
-                    let r = ui
-                        .add(Key::new(format!("install all ({pending})")).solid(READOUT))
-                        .on_hover_text("install every missing tool and update the ones behind");
-                    if r.clicked() {
-                        acts.push(Act::InstallAll);
-                    }
-                }
+                install_all(ui, all, acts);
             });
         });
+        if below {
+            ui.add_space(8.0);
+            install_all(ui, Key::new(format!("install all ({pending})")).solid(READOUT), acts);
+        }
     }
 
     fn grid(&self, ui: &mut Ui, members: &[usize], acts: &mut Vec<Act>) {
@@ -370,20 +381,22 @@ impl Hub {
             p.circle_filled(c, 4.0, OK);
         }
 
-        let chip_text = match (&slot.exe, running) {
-            (_, n) if n > 1 => format!("running {n}"),
-            (_, 1) => "running".into(),
-            (None, _) => "not installed".into(),
-            (Some(_), _) => "installed".into(),
-        };
-        let (chip_tint, lit) = match (&slot.exe, running) {
-            (_, n) if n > 0 => (OK, true),
-            (Some(_), _) => (TRACE, false),
-            (None, _) => (LEGEND, false),
-        };
         let text_x = icon_rect.right() + 14.0;
-        let name_w = rect.right() - PAD - text_x;
-        let name = elide(ui, tool.title, face(legend_font(20.0), VALUE), name_w);
+        let mut name_right = rect.right() - PAD;
+        if running > 0 {
+            let text = if running > 1 { format!("running {running}") } else { "running".into() };
+            let corner = Rect::from_min_max(
+                pos2(text_x, rect.top() + PAD),
+                pos2(rect.right() - PAD, rect.top() + PAD + 22.0),
+            );
+            let mut child = ui.new_child(
+                egui::UiBuilder::new()
+                    .max_rect(corner)
+                    .layout(egui::Layout::right_to_left(egui::Align::Min)),
+            );
+            name_right = chip(&mut child, &text, OK, true).rect.left() - 8.0;
+        }
+        let name = elide(ui, tool.title, face(legend_font(20.0), VALUE), name_right - text_x);
         p.galley(pos2(text_x, icon_rect.top() + 1.0), name, VALUE);
         let tag_w = rect.right() - PAD - text_x;
         let tagline = elide(ui, tool.tagline, face(FontId::proportional(13.0), LEGEND), tag_w);
@@ -391,21 +404,8 @@ impl Hub {
 
         let inner_w = rect.width() - 2.0 * PAD;
         let row1 = pos2(rect.left() + PAD, icon_rect.bottom() + 16.0);
-        let chip_row = Rect::from_min_max(
-            pos2(rect.left() + PAD, row1.y - 2.0),
-            pos2(rect.right() - PAD, row1.y + 22.0),
-        );
-        let chip_rect = ui
-            .scope_builder(
-                egui::UiBuilder::new()
-                    .max_rect(chip_row)
-                    .layout(egui::Layout::right_to_left(egui::Align::Min)),
-                |ui| chip(ui, &chip_text, chip_tint, lit),
-            )
-            .inner
-            .rect;
         let version = version_line(slot, current.as_deref(), &state, release.as_ref());
-        let version = elide_job(ui, version, chip_rect.left() - 10.0 - row1.x);
+        let version = elide_job(ui, version, inner_w);
         p.galley(row1, version, VALUE);
 
         let row2 = Rect::from_min_size(row1 + vec2(0.0, 22.0), vec2(inner_w, 16.0));
@@ -468,6 +468,16 @@ impl Hub {
         let primary_rect =
             Rect::from_min_max(row.left_top(), pos2(row.right() - second_w, row.bottom()));
         match &slot.exe {
+            Some(_) if slot.tool.takes_folders() => {
+                let resp = Key::new("open project")
+                    .solid(VALUE)
+                    .id_salt(("launch", i))
+                    .paint(ui, primary_rect)
+                    .on_hover_text(format!("pick a project folder to open in {}", slot.tool.title));
+                if resp.clicked() {
+                    acts.push(Act::Pick(i));
+                }
+            }
             Some(exe) => {
                 let resp = Key::new("launch")
                     .solid(VALUE)
@@ -555,8 +565,10 @@ impl Hub {
                 ui.interact(row, Id::new(("where", slot.tool.name)), Sense::hover())
                     .on_hover_text(exe.display().to_string());
             }
-            (None, Some(_), Some(b)) => {
-                note(format!("{} download for {target}", megabytes(b)), LEGEND)
+            (None, Some(r), Some(b)) => {
+                let when =
+                    date(&r.published).map(|d| format!("released {d}, ")).unwrap_or_default();
+                note(format!("{when}{} download", megabytes(b)), LEGEND)
             }
             (None, Some(r), None) => note(format!("{} has no build for {target}", r.tag), LEGEND),
             (None, None, _) => note("looking for the latest release".into(), LEGEND),
@@ -732,7 +744,7 @@ fn version_line(
     let line = match (installed, current) {
         (false, _) => Line::new(),
         (true, Some(v)) => Line::new().legend("installed").value(v.to_string()),
-        (true, None) => Line::new().legend("installed").note("version unknown"),
+        (true, None) => Line::new().legend("installed").note("unknown version"),
     };
     let next = |line: Line| if installed { line.gap(16.0) } else { line };
     let line = match (state, release) {
@@ -742,17 +754,18 @@ fn version_line(
             next(line).legend("latest").set(r.version.clone())
         }
         (_, Some(r)) if installed => next(line).legend("latest").value(r.version.clone()),
-        (_, Some(r)) => {
-            let line = line.legend("latest").value(r.version.clone());
-            match date(&r.published) {
-                Some(d) => line.note(format!("released {d}")),
-                None => line,
-            }
-        }
+        (_, Some(r)) => line.legend("latest").value(r.version.clone()),
         _ if installed => line,
         _ => line.legend("latest").note("unknown"),
     };
     line.job()
+}
+
+fn install_all(ui: &mut Ui, key: Key, acts: &mut Vec<Act>) {
+    let r = ui.add(key).on_hover_text("install every missing tool and update the ones behind");
+    if r.clicked() {
+        acts.push(Act::InstallAll);
+    }
 }
 
 fn progress(install: &Install) -> Option<(Option<f32>, String)> {
