@@ -1,7 +1,7 @@
 use crate::catalog::{
     Archive, Package, Target, Tool, VERSIONS_FILE, read_versions, write_versions,
 };
-use egui_bench::update::{find_file, replace, replace_self, unpack};
+use egui_bench::update::{find_file, replace, unpack};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -100,13 +100,18 @@ pub fn reveal(path: &Path) -> Result<(), String> {
 }
 
 pub fn place_self(target: Target, file: &Path) -> Result<(), String> {
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    place_suite(target, file, &fs::canonicalize(&exe).unwrap_or(exe))
+}
+
+fn place_suite(target: Target, file: &Path, dest: &Path) -> Result<(), String> {
     let staging = std::env::temp_dir().join(format!("bench-suite-self-{}", std::process::id()));
     let _ = fs::remove_dir_all(&staging);
     let placed = unpack(file, &staging).and_then(|()| {
         let exe = target.exe(crate::catalog::SUITE.bin);
         let new =
             find_file(&staging, &exe).ok_or_else(|| format!("{exe} is not in the release"))?;
-        replace_self(&new)
+        replace(&new, dest)
     });
     let _ = fs::remove_dir_all(&staging);
     placed
@@ -126,6 +131,29 @@ mod tests {
     use super::*;
     use crate::catalog::TOOLS;
     use egui_bench::update::{download, latest, probe_version};
+
+    #[test]
+    #[ignore = "downloads the suite's latest release"]
+    fn the_suite_replaces_itself_from_its_latest_release() {
+        let target = Target::host().unwrap();
+        let release = latest(crate::catalog::SUITE.repo, None).unwrap();
+        let package = crate::catalog::SUITE.package(target, &release.tag).unwrap();
+        let asset = release.asset(&package.name).unwrap();
+        let scratch = std::env::temp_dir().join("bench-suite-test-self");
+        let file = download(asset, &scratch, |_, _| {}).unwrap();
+        let dest = scratch.join("installed").join(target.exe("bench-suite"));
+        fs::create_dir_all(dest.parent().unwrap()).unwrap();
+        fs::write(&dest, "old launcher").unwrap();
+        place_suite(target, &file, &dest).unwrap();
+        assert!(fs::metadata(&dest).unwrap().len() > 1_000_000);
+        let left: Vec<_> = fs::read_dir(dest.parent().unwrap())
+            .unwrap()
+            .flatten()
+            .map(|e| e.file_name())
+            .collect();
+        assert_eq!(left.len(), 1);
+        fs::remove_dir_all(&scratch).unwrap();
+    }
 
     #[test]
     #[ignore = "downloads every tool's latest release"]
