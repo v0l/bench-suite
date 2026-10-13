@@ -656,6 +656,7 @@ dependencies = [
 [[package]]
 name = "egui_bench"
 version = "0.2.3"
+source = "git+https://github.com/v0l/egui_bench#98bc6266519247d23f516f3909006b3c17a51c99"
 dependencies = [
  "egui",
  "flate2",
