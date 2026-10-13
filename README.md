@@ -20,7 +20,7 @@ Download `bench-suite` for your machine from
 [releases](https://github.com/v0l/bench-suite/releases), or on Linux and macOS:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/v0l/bench-suite/master/install.sh | sh
+curl -fsSL https://benchsuite.net/install.sh | sh
 ```
 
 ## What it does
