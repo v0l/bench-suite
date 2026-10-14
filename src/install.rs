@@ -77,10 +77,15 @@ pub fn place(
     });
     let _ = fs::remove_dir_all(&staging);
     placed?;
-    record(tool, version)
+    record(tool, version)?;
+    if let Some(exe) = crate::catalog::locate(&[into], tool.bin) {
+        crate::skills::install(tool, &exe, version)?;
+    }
+    Ok(())
 }
 
 pub fn remove(tool: &Tool) -> Result<(), String> {
+    crate::skills::remove(tool)?;
     let _held = VERSIONS_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let dir = home(tool);
     if dir.exists() {
@@ -157,6 +162,31 @@ mod tests {
             .collect();
         assert_eq!(left.len(), 1);
         fs::remove_dir_all(&scratch).unwrap();
+    }
+
+    #[test]
+    #[ignore = "downloads gcad and agentee and writes their skills under HOME"]
+    fn agent_tools_install_their_skill_from_their_latest_release() {
+        let target = Target::host().unwrap();
+        for tool in TOOLS.iter().filter(|t| t.skill.is_some()) {
+            let release = latest(tool.repo, Some(&cache())).unwrap();
+            let package = tool.package(target, &release.tag).unwrap();
+            let asset = release.asset(&package.name).unwrap();
+            let scratch = std::env::temp_dir().join(format!("bench-suite-skill-{}", tool.name));
+            let file = download(asset, &scratch, |_, _| {}).unwrap();
+            place(tool, target, &package, &release.version, &file).unwrap();
+            let _ = fs::remove_dir_all(&scratch);
+            let placed = crate::skills::placed(tool);
+            assert!(!placed.is_empty(), "{}", tool.name);
+            for p in &placed {
+                assert!(p.path.join("SKILL.md").is_file(), "{}", p.path.display());
+            }
+            assert!(crate::skills::current(tool, &release.version), "{}", tool.name);
+            remove(tool).unwrap();
+            assert!(
+                crate::skills::placed(tool).iter().all(|p| p.how == crate::skills::How::Theirs)
+            );
+        }
     }
 
     #[test]

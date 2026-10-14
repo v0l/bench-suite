@@ -38,6 +38,17 @@ way, beside the launcher, in a folder listed in `BENCH_SUITE_TOOLS` or on
 `PATH`, is found and launched too, and its version is read with `--version`
 where the tool has one.
 
+## Agent skills
+
+gcad and agentee are made to be driven by a coding agent, and each release ships
+the skill that teaches one how. Installing or updating either puts its skill in
+`~/.agents/skills/<tool>`, which Codex, Cursor, OpenCode, Gemini CLI, GitHub
+Copilot, pi and most other agents read, the same layout `npx skills add -g`
+uses. Claude Code, Windsurf, Goose, Roo Code, Kiro and Qwen Code read their own
+folders, so where one of those is set up the suite links its skills folder to
+that copy. A skill you put there yourself is left alone, and uninstalling a
+tool removes only the copy and links the suite made.
+
 Drop a file on the window and it opens in the tool that reads it: a `.gcad` in
 gcad, a `.pcb.toml` or a project folder in agentee, a radiometric `.jpg` in
 thermview.

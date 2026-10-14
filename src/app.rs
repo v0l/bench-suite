@@ -1,5 +1,6 @@
 use crate::catalog::{SUITE, TOOLS, Target, Tool, for_path, locate};
 use crate::install;
+use crate::skills::{self, Placed};
 use egui_bench::prelude::Browser;
 use egui_bench::update::{self, Install, Release, State, Updater};
 use std::path::{Path, PathBuf};
@@ -17,6 +18,7 @@ pub struct Slot {
     pub settled: bool,
     pub running: Vec<Child>,
     pub recent: Vec<PathBuf>,
+    pub skills: Result<Vec<Placed>, String>,
 }
 
 impl Slot {
@@ -73,6 +75,7 @@ pub enum Act {
     Uninstall(usize),
     Remove(usize),
     Reveal(usize),
+    RevealPath(PathBuf),
     Check,
     UpdateSelf,
     Restart,
@@ -115,6 +118,7 @@ impl Hub {
                     settled: true,
                     running: Vec::new(),
                     recent,
+                    skills: Ok(Vec::new()),
                 };
                 relocate(&mut slot, &versions, &cc.egui_ctx);
                 slot
@@ -218,6 +222,12 @@ impl Hub {
 
     pub fn say(&mut self, msg: &str, fault: bool) {
         self.status = Some((msg.to_string(), fault));
+    }
+
+    pub fn reveal(&mut self, path: &Path) {
+        if let Err(e) = install::reveal(path) {
+            self.say(&format!("could not open the folder: {e}"), true);
+        }
     }
 
     pub fn launch(&mut self, i: usize, path: Option<PathBuf>) {
@@ -351,12 +361,11 @@ impl Hub {
                 Act::Uninstall(i) => self.removing = Some(i),
                 Act::Remove(i) => self.uninstall(ctx, i),
                 Act::Reveal(i) => {
-                    if let Some(exe) = self.slots[i].exe.clone()
-                        && let Err(e) = install::reveal(&exe)
-                    {
-                        self.say(&format!("could not open the folder: {e}"), true);
+                    if let Some(exe) = self.slots[i].exe.clone() {
+                        self.reveal(&exe);
                     }
                 }
+                Act::RevealPath(path) => self.reveal(&path),
                 Act::Check => self.check(ctx),
                 Act::UpdateSelf => self.update_self(ctx),
                 Act::Restart => match update::relaunch() {
@@ -406,8 +415,12 @@ fn relocate(slot: &mut Slot, versions: &[(String, String)], ctx: &egui::Context)
         locate(&[install::home(tool)], tool.bin).filter(|p| p.starts_with(install::root()));
     slot.managed = managed.is_some();
     slot.exe = managed.or_else(|| locate(&search_dirs(), tool.bin));
+    slot.skills = Ok(Vec::new());
     if slot.managed {
         let v = versions.iter().find(|(n, _)| n == tool.name).map(|(_, v)| v.clone());
+        if let (Some(exe), Some(version)) = (&slot.exe, &v) {
+            slot.skills = sync_skill(tool, exe, version);
+        }
         slot.updater.set_current(v);
     } else if let Some(exe) = slot.exe.clone().filter(|_| tool.version_flag) {
         let updater = slot.updater.clone();
@@ -419,6 +432,13 @@ fn relocate(slot: &mut Slot, versions: &[(String, String)], ctx: &egui::Context)
     } else {
         slot.updater.set_current(None);
     }
+}
+
+fn sync_skill(tool: &Tool, exe: &Path, version: &str) -> Result<Vec<Placed>, String> {
+    if !skills::current(tool, version) {
+        skills::install(tool, exe, version)?;
+    }
+    Ok(skills::placed(tool))
 }
 
 fn search_dirs() -> Vec<PathBuf> {

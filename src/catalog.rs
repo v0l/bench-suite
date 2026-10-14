@@ -108,6 +108,7 @@ pub struct Tool {
     pub verb: &'static [&'static str],
     pub opens: Opens,
     pub version_flag: bool,
+    pub skill: Option<&'static str>,
     asset: fn(&Tool, Target, &str) -> Option<Package>,
 }
 
@@ -183,6 +184,7 @@ pub const TOOLS: [Tool; 6] = [
         verb: &[],
         opens: Opens::Files(&[".gcad", ".gasm", ".gsim"]),
         version_flag: true,
+        skill: Some("gcad"),
         asset: unversioned,
     },
     Tool {
@@ -204,6 +206,7 @@ pub const TOOLS: [Tool; 6] = [
             ".sim.toml",
         ]),
         version_flag: true,
+        skill: Some("agentee"),
         asset: unversioned,
     },
     Tool {
@@ -217,6 +220,7 @@ pub const TOOLS: [Tool; 6] = [
         verb: &[],
         opens: Opens::Nothing,
         version_flag: false,
+        skill: None,
         asset: tagged,
     },
     Tool {
@@ -231,6 +235,7 @@ pub const TOOLS: [Tool; 6] = [
         verb: &[],
         opens: Opens::Nothing,
         version_flag: true,
+        skill: None,
         asset: waveshark,
     },
     Tool {
@@ -245,6 +250,7 @@ pub const TOOLS: [Tool; 6] = [
         verb: &[],
         opens: Opens::Files(&[".irg", ".jpg", ".jpeg", ".img", ".seq"]),
         version_flag: true,
+        skill: None,
         asset: unversioned,
     },
     Tool {
@@ -259,6 +265,7 @@ pub const TOOLS: [Tool; 6] = [
         verb: &[],
         opens: Opens::Nothing,
         version_flag: false,
+        skill: None,
         asset: tagged,
     },
 ];
@@ -274,6 +281,7 @@ pub const SUITE: Tool = Tool {
     verb: &[],
     opens: Opens::Nothing,
     version_flag: false,
+    skill: None,
     asset: unversioned,
 };
 
@@ -373,6 +381,12 @@ mod tests {
         let args = tool_named("agentee").args(Some(Path::new("/tmp/board")));
         assert_eq!(args, ["view", "/tmp/board"]);
         assert!(tool_named("gcad").args(None).is_empty());
+    }
+
+    #[test]
+    fn the_agent_tools_name_the_skill_their_release_ships() {
+        let skills: Vec<_> = TOOLS.iter().filter_map(|t| t.skill.map(|s| (t.name, s))).collect();
+        assert_eq!(skills, [("gcad", "gcad"), ("agentee", "agentee")]);
     }
 
     #[test]

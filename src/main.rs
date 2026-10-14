@@ -3,6 +3,7 @@
 mod app;
 mod catalog;
 mod install;
+mod skills;
 mod view;
 
 fn main() -> eframe::Result<()> {

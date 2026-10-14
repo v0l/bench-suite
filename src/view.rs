@@ -1,6 +1,7 @@
 use crate::app::{Act, Filter, Hub, Slot, file_label};
 use crate::catalog::{Group, SUITE, Target, Tool};
 use crate::install;
+use crate::skills::{self, How, Placed};
 use egui::text::{LayoutJob, TextFormat};
 use egui::{
     Color32, CornerRadius, FontId, Id, ImageSource, Pos2, Rect, Response, Sense, Stroke,
@@ -549,6 +550,18 @@ impl Hub {
             ui.interact(row, Id::new(("why", slot.tool.name)), Sense::hover()).on_hover_text(e);
             return;
         }
+        if slot.managed && !slot.behind() && slot.tool.skill.is_some() {
+            match &slot.skills {
+                Err(e) => return note(e.clone(), FAULT),
+                Ok(placed) if !placed.is_empty() => {
+                    note(skill_line(slot.tool, placed), LEGEND);
+                    ui.interact(row, Id::new(("skill", slot.tool.name)), Sense::hover())
+                        .on_hover_text(skill_hover(placed));
+                    return;
+                }
+                Ok(_) => {}
+            }
+        }
         let target = self.target.map(Target::label).unwrap_or("this machine");
         match (&slot.exe, state.release(), bytes) {
             (Some(exe), release, bytes) => {
@@ -618,6 +631,12 @@ impl Hub {
             }
             if slot.exe.is_some() && ui.button(action("Show in folder")).clicked() {
                 acts.push(Act::Reveal(i));
+            }
+            if let Ok(placed) = &slot.skills
+                && let Some(shared) = placed.iter().find(|p| p.agent.is_none())
+                && ui.button(action("Show agent skill")).on_hover_text(tidy(&shared.path)).clicked()
+            {
+                acts.push(Act::RevealPath(shared.path.clone()));
             }
             if slot.managed {
                 ui.separator();
@@ -843,6 +862,35 @@ fn date(iso: &str) -> Option<String> {
         ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
             .get(m.parse::<usize>().ok()?.checked_sub(1)?)?;
     Some(format!("{} {month} {y}", d.parse::<u32>().ok()?))
+}
+
+fn skill_line(tool: &Tool, placed: &[Placed]) -> String {
+    let linked: Vec<&str> =
+        placed.iter().filter(|p| p.how != How::Theirs).filter_map(|p| p.agent).collect();
+    match placed.iter().find(|p| p.agent.is_none()) {
+        Some(p) if p.how == How::Theirs => {
+            format!("your own {} skill in {} is kept", tool.name, tidy(&p.path))
+        }
+        Some(_) if linked.is_empty() => "agent skill installed for your agents".to_string(),
+        Some(_) => format!("agent skill installed, linked for {}", linked.join(", ")),
+        None => format!("agent skill linked for {}", linked.join(", ")),
+    }
+}
+
+fn skill_hover(placed: &[Placed]) -> String {
+    let mut lines: Vec<String> = placed
+        .iter()
+        .map(|p| {
+            let how = match p.how {
+                How::Copied => "installed",
+                How::Linked => "linked",
+                How::Theirs => "left as it was",
+            };
+            format!("{} {how}", tidy(&p.path))
+        })
+        .collect();
+    lines.push(format!("read by {} and others", skills::readers(placed)));
+    lines.join("\n")
 }
 
 fn tidy(path: &Path) -> String {
