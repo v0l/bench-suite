@@ -201,9 +201,10 @@ fn placed_in(name: &str, layout: &Layout) -> Vec<Placed> {
 fn install_into(from: &Path, version: &str, layout: &Layout) -> Result<Vec<Placed>, String> {
     let name = from.file_name().ok_or("the skill folder has no name")?.to_string_lossy();
     let shared = layout.shared.join(name.as_ref());
-    if fs::symlink_metadata(&shared).is_err() || ours(&shared) {
-        copy_marked(from, &shared, version)?;
+    if fs::symlink_metadata(&shared).is_ok() && !ours(&shared) {
+        return Ok(placed_in(&name, layout));
     }
+    copy_marked(from, &shared, version)?;
     for (_, dir) in &layout.links {
         let dest = dir.join(name.as_ref());
         if same(&dest, &shared) {
@@ -226,9 +227,10 @@ fn install_into(from: &Path, version: &str, layout: &Layout) -> Result<Vec<Place
 
 fn remove_from(name: &str, layout: &Layout) -> Result<(), String> {
     let shared = layout.shared.join(name);
+    let owned = ours(&shared);
     for (_, dir) in &layout.links {
         let dest = dir.join(name);
-        let gone = if points_at(&dest, &shared) {
+        let gone = if owned && points_at(&dest, &shared) {
             unlink(&dest)
         } else if ours(&dest) {
             fs::remove_dir_all(&dest)
@@ -381,13 +383,14 @@ mod tests {
         fs::create_dir_all(&layout.shared).unwrap();
         std::os::unix::fs::symlink(&mine, layout.shared.join("gcad")).unwrap();
         let claude = layout.links[0].1.join("gcad");
-        fs::create_dir_all(&claude).unwrap();
-        fs::write(claude.join("SKILL.md"), "claude's own").unwrap();
+        fs::create_dir_all(&layout.links[0].1).unwrap();
+        std::os::unix::fs::symlink("../../.agents/skills/gcad", &claude).unwrap();
         let placed = install_into(&s.release("shipped"), "v1", &layout).unwrap();
-        assert!(placed.iter().all(|p| p.how == How::Theirs), "{placed:?}");
+        assert_eq!(placed[0].how, How::Theirs);
         remove_from("gcad", &layout).unwrap();
         assert_eq!(fs::read_to_string(mine.join("SKILL.md")).unwrap(), "mine");
-        assert_eq!(fs::read_to_string(claude.join("SKILL.md")).unwrap(), "claude's own");
+        assert_eq!(fs::read_to_string(claude.join("SKILL.md")).unwrap(), "mine");
+        assert!(fs::symlink_metadata(&claude).unwrap().file_type().is_symlink());
     }
 
     #[test]
