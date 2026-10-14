@@ -66,6 +66,11 @@ others.
 
 ## Release
 
-Tag `v*`. CI builds the launcher for each platform and publishes
+Move the `Unreleased` entries in `CHANGELOG.md` under the new version, then
+tag `v*`. CI builds the launcher for each platform and publishes
 `bench-suite-<target>.tar.gz` (`.zip` on Windows), the asset names the
-launcher looks for when it updates itself.
+launcher looks for when it updates itself, with that version's changelog
+section as the release notes. A tag with no section fails the release.
+
+Every tool in the suite keeps a `CHANGELOG.md` the same way, and the
+launcher's "Release notes" link opens the GitHub release built from it.
