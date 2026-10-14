@@ -6,6 +6,8 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-14
+
 ### Added
 - Installing or updating gcad or agentee installs the agent skill its release ships, in
   `~/.agents/skills` where Codex, Cursor, OpenCode, Gemini CLI, GitHub Copilot and pi read it,
@@ -38,6 +40,7 @@ First release.
 - Release checks cached with ETags so they do not run into GitHub's limit, and `GITHUB_TOKEN`
   or `GH_TOKEN` used when set.
 
-[Unreleased]: https://github.com/v0l/bench-suite/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/v0l/bench-suite/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/v0l/bench-suite/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/v0l/bench-suite/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/v0l/bench-suite/releases/tag/v0.1.0
