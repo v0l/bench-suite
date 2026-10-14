@@ -160,6 +160,7 @@ fn lexical(path: &Path) -> PathBuf {
     out
 }
 
+#[cfg(unix)]
 fn relative(from_dir: &Path, to: &Path) -> PathBuf {
     let real = |p: &Path| fs::canonicalize(p).unwrap_or_else(|_| lexical(p));
     let to = match (to.parent(), to.file_name()) {
