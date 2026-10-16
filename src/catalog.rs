@@ -171,7 +171,7 @@ fn waveshark(tool: &Tool, target: Target, tag: &str) -> Option<Package> {
     Some(Package { name, archive })
 }
 
-pub const TOOLS: [Tool; 6] = [
+pub const TOOLS: [Tool; 7] = [
     Tool {
         name: "gcad",
         title: "gcad",
@@ -207,6 +207,21 @@ pub const TOOLS: [Tool; 6] = [
         ]),
         version_flag: true,
         skill: Some("agentee"),
+        asset: unversioned,
+    },
+    Tool {
+        name: "printfarm",
+        title: "printfarm",
+        tagline: "Every 3D printer in one window",
+        blurb: "State, temperatures, progress and camera for each printer, with a job queue \
+                and the history of every print.",
+        group: Group::Design,
+        repo: "v0l/printfarm",
+        bin: "printfarm",
+        verb: &[],
+        opens: Opens::Files(&[".gcode", ".gco"]),
+        version_flag: true,
+        skill: None,
         asset: unversioned,
     },
     Tool {
@@ -347,6 +362,10 @@ mod tests {
             name("antenna-toolbox", Target::LinuxArm64, "v0.1.0"),
             "antenna-toolbox-v0.1.0-aarch64-unknown-linux-gnu.tar.gz"
         );
+        assert_eq!(
+            name("printfarm", Target::MacArm64, "v0.1.0"),
+            "printfarm-aarch64-apple-darwin.tar.gz"
+        );
         assert_eq!(name("waveshark", Target::LinuxX64, "v0.4.0"), "waveshark-0.4.0-linux-x86_64");
         assert_eq!(
             SUITE.package(Target::WindowsX64, "v0.1.0").unwrap().name,
@@ -372,6 +391,7 @@ mod tests {
         assert_eq!(routed("bracket.gasm"), Some("gcad"));
         assert_eq!(routed("main.PCB.toml"), Some("agentee"));
         assert_eq!(routed("IR_0001.JPG"), Some("thermview"));
+        assert_eq!(routed("case-left.gcode"), Some("printfarm"));
         assert_eq!(routed("notes.txt"), None);
         assert_eq!(routed("Cargo.toml"), None);
     }

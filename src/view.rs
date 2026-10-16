@@ -28,6 +28,7 @@ pub fn icon(tool: &Tool) -> ImageSource<'static> {
         "gcad" => egui::include_image!("../assets/icons/gcad.svg"),
         "agentee" => egui::include_image!("../assets/icons/agentee.svg"),
         "antenna-toolbox" => egui::include_image!("../assets/icons/antenna-toolbox.svg"),
+        "printfarm" => egui::include_image!("../assets/icons/printfarm.svg"),
         "thermview" => egui::include_image!("../assets/icons/thermview.svg"),
         "cycler" => egui::include_image!("../assets/icons/cycler.svg"),
         "waveshark" => egui::include_image!("../assets/icons/waveshark.svg"),
@@ -743,7 +744,7 @@ impl Hub {
             }
             (Some(path), None) => (
                 format!("Nothing here opens {}", file_label(path)),
-                "The tools read part files, board files, project folders and thermal images"
+                "The tools read part files, board files, project folders, thermal images and G-code"
                     .to_string(),
             ),
             (None, _) => ("Drop to open".into(), "It goes to the tool that reads it".into()),

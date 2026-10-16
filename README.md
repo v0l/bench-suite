@@ -7,6 +7,7 @@ releases, keeps it up to date, and starts it.
 |---|---|
 | [gcad](https://github.com/v0l/gcad) | Parametric CAD written like G-code, one operation per line |
 | [agentee](https://github.com/v0l/agentee) | Boards, schematics, layouts and simulations as plain TOML |
+| [printfarm](https://github.com/v0l/printfarm) | Every 3D printer in one window: state, temperatures, camera, job queue and history |
 | [Antenna Toolbox](https://github.com/v0l/antenna-toolbox) | Antenna modelling, NanoVNA control and radio path planning |
 | [WaveShark](https://github.com/v0l/waveshark) | Wireshark for the radio spectrum |
 | [thermview](https://github.com/v0l/thermview) | Radiometric thermal images from InfiRay, Hikmicro, DJI and FLIR |
@@ -51,7 +52,7 @@ tool removes only the copy and links the suite made.
 
 Drop a file on the window and it opens in the tool that reads it: a `.gcad` in
 gcad, a `.pcb.toml` or a project folder in agentee, a radiometric `.jpg` in
-thermview.
+thermview, a `.gcode` in printfarm.
 
 GitHub answers 60 unauthenticated checks an hour. The last answer for each tool
 is kept and asked about again with its ETag, which does not count against that,
