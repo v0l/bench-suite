@@ -6,6 +6,8 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-18
+
 ### Added
 - printfarm, every 3D printer in one window. A `.gcode` dropped on the launcher is queued in it.
 
