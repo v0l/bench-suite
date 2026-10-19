@@ -192,7 +192,8 @@ mod tests {
     #[test]
     fn the_cycler_command_line_is_its_own_binary() {
         let p = program_of(tool("cycler"), Path::new("/nowhere/cycler-ui"));
-        assert_eq!(p, PathBuf::from("cycler"));
+        let name = if cfg!(windows) { "cycler.exe" } else { "cycler" };
+        assert_eq!(p, PathBuf::from(name));
         let p = program_of(tool("gcad"), Path::new("/usr/local/bin/gcad"));
         assert_eq!(p, PathBuf::from("/usr/local/bin/gcad"));
     }
