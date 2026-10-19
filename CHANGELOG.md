@@ -6,6 +6,8 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-19
+
 ### Added
 - Battery Control, a live monitor and control window for BMSes and power stations.
 - A coding agent that fills the window, opened with the Agent key in the header. It talks to any
