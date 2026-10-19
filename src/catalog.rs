@@ -103,6 +103,7 @@ pub struct Tool {
     pub tagline: &'static str,
     pub blurb: &'static str,
     pub guide: &'static str,
+    pub features: &'static [&'static str],
     pub cli: &'static [&'static str],
     pub cli_bin: &'static str,
     pub group: Group,
@@ -182,6 +183,14 @@ pub const TOOLS: [Tool; 9] = [
         blurb: "Parts and assemblies written like G-code. Mates, joints, torque sims, and \
                 STEP, STL, 3MF or drawings out.",
         guide: crate::guides::GCAD,
+        features: &[
+            "Parametric parts written one operation per line, like G-code",
+            "Assemblies with mates, turning and sliding joints and an interference check",
+            "Sheet metal with DXF flat patterns, weldments with a cut list, and a library of screws, nuts and bearings",
+            "Torque simulation that sizes joint motors",
+            "Export to STEP, STL, OBJ, 3MF, SVG and PDF drawings, with a bill of materials",
+            "A viewer that rebuilds the part whenever the file is saved",
+        ],
         cli: &["check", "measure", "query", "export", "sim", "materials", "bom", "render", "docs"],
         cli_bin: "",
         group: Group::Design,
@@ -200,6 +209,14 @@ pub const TOOLS: [Tool; 9] = [
         blurb: "Boards, schematics, layouts and simulations as text files. Opens a project \
                 folder and reloads as the files change.",
         guide: crate::guides::AGENTEE,
+        features: &[
+            "Boards, symbols, footprints, schematics and layouts as plain TOML",
+            "Imports parts from the installed KiCad libraries",
+            "Routing, zone fill and design rule checks on a layout",
+            "FDTD, DC drop, thermal, channel and power delivery simulations",
+            "Gerbers, drill files, BOM, placement and a STEP export for the case",
+            "Prices a BOM at Mouser, Farnell and DigiKey",
+        ],
         cli: &[
             "check",
             "drc",
@@ -259,6 +276,13 @@ pub const TOOLS: [Tool; 9] = [
         blurb: "State, temperatures, progress and camera for each printer, with a job queue \
                 and the history of every print.",
         guide: crate::guides::PRINTFARM,
+        features: &[
+            "Every 3D printer in one window, with state, temperatures and a camera",
+            "A job queue with the part drawn from the G-code itself",
+            "Prints run from the printer's SD card, so closing the window does not stop one",
+            "Bed mesh, SD card files and a console for each printer",
+            "Marlin printers over USB today, with Moonraker, OctoPrint, PrusaLink and Bambu LAN planned",
+        ],
         cli: &[],
         cli_bin: "",
         group: Group::Design,
@@ -276,6 +300,14 @@ pub const TOOLS: [Tool; 9] = [
         tagline: "Antenna models, NanoVNA and path planning",
         blurb: "Model an antenna, sweep it with a NanoVNA, and plan a radio path over terrain.",
         guide: crate::guides::ANTENNA_TOOLBOX,
+        features: &[
+            "37 antenna templates solved by method of moments, FDTD or physical optics",
+            "A cut sheet, drawing and feed detail for each design",
+            "Drives a NanoVNA over USB, with SOL calibration and a Smith chart",
+            "Terrain path profiles with Longley-Rice and ITU-R models",
+            "Coverage maps and an HF sky map with reliability by hour and band",
+            "RF exposure checks against ICNIRP and FCC limits",
+        ],
         cli: &[],
         cli_bin: "",
         group: Group::Radio,
@@ -294,6 +326,14 @@ pub const TOOLS: [Tool; 9] = [
         blurb: "Leave an SDR on a band and it tells you what is transmitting around you, \
                 decoded or not.",
         guide: crate::guides::WAVESHARK,
+        features: &[
+            "Leave an SDR on a band and see what is transmitting, decoded or not",
+            "Decodes pagers, DMR, TETRA, M17, LoRa mesh, utility meters and weather sensors",
+            "Aircraft and vessel tracking, with SSTV and DVB-T pictures",
+            "Voice in WFM, NFM, AM, SSB and CW, with a local speech transcript",
+            "Works with RTL-SDR, HackRF and LimeSDR, or a tuner on another machine",
+            "Has an agent of its own that can drive the receiver",
+        ],
         cli: &[],
         cli_bin: "",
         group: Group::Radio,
@@ -312,6 +352,14 @@ pub const TOOLS: [Tool; 9] = [
         blurb: "Flash firmware and read or write codeplugs on TYT, Baofeng, Radioddity, \
                 Yaesu and Ailunce radios, over USB, a cable or Bluetooth.",
         guide: crate::guides::RADIO_TOOL,
+        features: &[
+            "Flashes firmware on TYT, Baofeng, Radioddity, Yaesu and Ailunce handhelds",
+            "Reads and writes codeplugs over USB, a serial cable or Bluetooth",
+            "A window for picking the radio and flashing or editing it",
+            "Says what a firmware file is and lists the channels in a codeplug, with no radio attached",
+            "Builds a firmware file from raw segments, and takes one apart",
+            "A command line for scripts and for files",
+        ],
         cli: &["fw-info", "codeplug-info", "wrap", "unwrap", "make-xor", "models"],
         cli_bin: "",
         group: Group::Radio,
@@ -330,6 +378,13 @@ pub const TOOLS: [Tool; 9] = [
         blurb: "Temperatures from InfiRay, Hikmicro, DJI and FLIR files, with spot, line and \
                 area readings.",
         guide: crate::guides::THERMVIEW,
+        features: &[
+            "Reads InfiRay, Hikmicro, FLIR and DJI radiometric images",
+            "Nine palettes, a colour bar with a draggable window, and linear, log or equalised mapping",
+            "Spot readings, hottest and coldest markers and a temperature under the pointer",
+            "Recalibrates FLIR images from emissivity, distance and air conditions",
+            "Exports the image with its markers as a PNG",
+        ],
         cli: &["info", "render"],
         cli_bin: "",
         group: Group::Measure,
@@ -348,6 +403,13 @@ pub const TOOLS: [Tool; 9] = [
         blurb: "Cells, charge, temperatures, outputs and settings for BMSes and power stations \
                 over Bluetooth or a serial cable.",
         guide: crate::guides::BATTERY_CONTROL,
+        features: &[
+            "Live charge, voltage, current, every cell and temperature, with a history plot",
+            "Reads Anker SOLIX, JK, JBD, SOK, Renogy, Pace, Seplos, Daly, Bluetti, Jackery, EcoFlow, Victron and Pylontech",
+            "Scans Bluetooth and probes USB serial ports for devices",
+            "Switches charge and discharge, the balancer and output ports where the device allows it",
+            "A demo pack with no hardware, started with --demo",
+        ],
         cli: &[],
         cli_bin: "",
         group: Group::Measure,
@@ -366,6 +428,14 @@ pub const TOOLS: [Tool; 9] = [
         blurb: "Charge, discharge and capacity runs on a cell, through the BMS or charger \
                 it is wired to.",
         guide: crate::guides::CYCLER,
+        features: &[
+            "Charges, rests and discharges a pack and counts amp-hours",
+            "Decides on the highest or lowest cell, not the pack voltage",
+            "Charge in standard, top-balance and bulk-only modes, discharge in CC, CV, CR or CP",
+            "Stops at a state of charge, and runs cycle plans that measure real capacity",
+            "Logs every sample to CSV and shows the BMS alarms",
+            "Works with a pack that has no BMS, on voltage limits",
+        ],
         cli: &["devices", "profile"],
         cli_bin: "cycler",
         group: Group::Measure,
@@ -385,6 +455,7 @@ pub const SUITE: Tool = Tool {
     tagline: "",
     blurb: "",
     guide: "",
+    features: &[],
     cli: &[],
     cli_bin: "",
     group: Group::Design,
@@ -512,6 +583,20 @@ mod tests {
     fn the_agent_tools_name_the_skill_their_release_ships() {
         let skills: Vec<_> = TOOLS.iter().filter_map(|t| t.skill.map(|s| (t.name, s))).collect();
         assert_eq!(skills, [("gcad", "gcad"), ("agentee", "agentee")]);
+    }
+
+    #[test]
+    fn every_tool_says_what_it_can_do_in_a_few_plain_lines() {
+        for tool in TOOLS.iter() {
+            let n = tool.features.len();
+            assert!((4..=7).contains(&n), "{} has {n} feature lines", tool.name);
+            for line in tool.features {
+                assert!(line.len() > 20 && line.len() < 140, "{}: {line:?}", tool.name);
+                assert!(!line.ends_with('.'), "{}: {line:?}", tool.name);
+                assert!(!line.contains('`'), "{}: {line:?}", tool.name);
+                assert!(!line.contains('\u{2014}') && !line.contains('\u{2013}'), "{line:?}");
+            }
+        }
     }
 
     #[test]

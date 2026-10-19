@@ -73,18 +73,20 @@ This chat does not drive it: launch it and the user works there.\n\
 Reach for it when the user wants to see or decode what is on the air.";
 
 pub const RADIO_TOOL: &str = "\
-Firmware and codeplug tool for handheld radios, run from the command line. It has no window: \
-launching it only prints its help, so use it through run_tool.\n\
+Firmware and codeplug tool for handheld radios, with a window and a command line. launch opens \
+the window, where the user picks the radio and flashes or edits it. A release from before the \
+window only prints its help when launched, so for file work use it through run_tool.\n\
 Without a radio it reads files: `fw-info FILE` says what a firmware file is, `codeplug-info FILE` \
 lists a codeplug's channels (TYT/Baofeng DM-1701 RDT, Baofeng UV-5R and UV-17Pro images, CHIRP \
 images of those), `wrap -r MODEL -s ADDR:FILE -o OUT` builds a firmware file from raw segments \
 and `unwrap FILE -o PREFIX` takes one apart, `make-xor FILE` guesses an unknown firmware's key, \
 and `models` lists the radios it knows.\n\
 With a radio attached it flashes firmware and reads and writes codeplugs over USB, a serial \
-cable or Bluetooth. Those commands change the radio and are not open to this chat: tell the user \
-the command to run themselves, for example `radio_tool flash -i fw.bin` to check a firmware \
-against the radio and the same with `--write` to flash it.\n\
-Reach for it when the user has a radio firmware or codeplug file to inspect or build.";
+cable or Bluetooth. Those commands change the radio and are not open to this chat: launch the \
+window for the user, or tell them the command to run themselves, for example `radio_tool flash \
+-i fw.bin` to check a firmware against the radio and the same with `--write` to flash it.\n\
+Reach for it when the user has a handheld radio to flash or program, or a firmware or codeplug \
+file to inspect or build.";
 
 pub const THERMVIEW: &str = "\
 A thermal imaging analysis tool for thermographers. It reads, renders and measures radiometric \

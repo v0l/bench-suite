@@ -82,8 +82,8 @@ pub enum Act {
     Restart,
     Url(String),
     ShowAll,
-    Docs(usize, crate::docs::Kind),
-    SuiteDocs(crate::docs::Kind),
+    Page(usize, crate::docs::Tab),
+    SuitePage(crate::docs::Tab),
 }
 
 pub struct Hub {
@@ -392,11 +392,11 @@ impl Hub {
                 },
                 Act::Url(url) => ctx.open_url(egui::OpenUrl::new_tab(url)),
                 Act::Pick(i) => self.pick(i),
-                Act::Docs(i, kind) => {
+                Act::Page(i, tab) => {
                     let repo = self.slots[i].tool.repo;
-                    self.reader.show(repo, kind);
+                    self.reader.show(repo, tab);
                 }
-                Act::SuiteDocs(kind) => self.reader.show(SUITE.repo, kind),
+                Act::SuitePage(tab) => self.reader.show(SUITE.repo, tab),
                 Act::ShowAll => {
                     self.filter = Filter::All;
                     self.search.clear();

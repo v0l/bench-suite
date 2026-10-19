@@ -6,6 +6,7 @@ mod catalog;
 mod docs;
 mod guides;
 mod install;
+mod page;
 mod skills;
 mod view;
 

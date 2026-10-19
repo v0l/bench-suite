@@ -72,7 +72,7 @@ impl eframe::App for Hub {
             ui.painter().rect_filled(r, 0.0, CHASSIS);
             rule(ui, r.left_top(), r.right_top());
             if self.reader.open.is_some() {
-                self.reader_page(ui, &mut acts);
+                self.page_view(ui, &mut acts);
                 return;
             }
             if self.agent.open {
@@ -140,87 +140,6 @@ impl Hub {
                 });
             });
         });
-    }
-
-    fn reader_page(&mut self, ui: &mut Ui, acts: &mut Vec<Act>) {
-        let Some(doc) = self.reader.open.clone() else { return };
-        let title = self
-            .slots
-            .iter()
-            .find(|s| s.tool.repo == doc.repo)
-            .map(|s| s.tool.title)
-            .unwrap_or(SUITE.title);
-        let ctx = ui.ctx().clone();
-        let loaded = self.reader.library.get(&doc, &ctx);
-        let mut close = false;
-        let mut switch = None;
-        let page = reader_column(ui.max_rect());
-        ui.scope_builder(egui::UiBuilder::new().max_rect(page), |ui| {
-            ui.add_space(12.0);
-            ui.horizontal(|ui| {
-                if ui.add(Key::new("back").outline(VALUE)).clicked() {
-                    close = true;
-                }
-                ui.add_space(8.0);
-                Line::new().legend(title).value(doc.kind.label()).show(ui);
-                ui.add_space(12.0);
-                let mut kind = doc.kind;
-                let options: Vec<(crate::docs::Kind, &str, Option<usize>)> =
-                    crate::docs::Kind::ALL.iter().map(|k| (*k, k.label(), None)).collect();
-                if segments(ui, &mut kind, &options) {
-                    switch = Some(kind);
-                }
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui
-                        .add(Key::new("open in browser").outline(READOUT))
-                        .on_hover_text(doc.page())
-                        .clicked()
-                    {
-                        acts.push(Act::Url(doc.page()));
-                    }
-                });
-            });
-            ui.add_space(8.0);
-            rule(ui, ui.max_rect().left_top(), ui.max_rect().right_top());
-            ui.add_space(8.0);
-            match loaded {
-                crate::docs::Loaded::Loading => {
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Spinner::new().size(12.0));
-                        ui.add_space(6.0);
-                        Line::new().legend("loading").size(11.0).show(ui);
-                    });
-                }
-                crate::docs::Loaded::Failed(e) => {
-                    Line::new().value(e).tint(FAULT).wrapped(ui);
-                    ui.add_space(8.0);
-                    if ui.add(Key::new("try again").outline(VALUE)).clicked() {
-                        self.reader.library.forget(&doc);
-                    }
-                }
-                crate::docs::Loaded::Ready(text) => {
-                    let base = doc.base();
-                    egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-                        ui.set_width(ui.available_width());
-                        egui_bench::markdown::show_at(
-                            ui,
-                            &mut self.reader.cache,
-                            &text,
-                            0,
-                            Some(&base),
-                        );
-                        ui.add_space(24.0);
-                    });
-                }
-            }
-        });
-        self.reader.cache.sweep();
-        if let Some(kind) = switch {
-            self.reader.open = Some(crate::docs::Doc { repo: doc.repo.clone(), kind });
-        }
-        if close {
-            self.reader.open = None;
-        }
     }
 
     fn page_tabs(&mut self, ui: &mut Ui) {
@@ -294,7 +213,7 @@ impl Hub {
                         .on_hover_text("read the changelog before updating")
                         .clicked()
                     {
-                        acts.push(Act::SuiteDocs(crate::docs::Kind::Changelog));
+                        acts.push(Act::SuitePage(crate::docs::Tab::Changelog));
                     }
                 }
                 busy_state => {
@@ -484,6 +403,13 @@ impl Hub {
         let installable = slot.installable(self.target);
 
         let hovered = ui.rect_contains_pointer(rect);
+        let open_page = ui.interact(rect, Id::new(("card", i)), Sense::click());
+        if hovered {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+        }
+        if open_page.clicked() {
+            acts.push(Act::Page(i, crate::docs::Tab::Overview));
+        }
         let p = ui.painter().clone();
         p.rect_filled(rect, R, PANEL);
         p.rect_stroke(
@@ -748,11 +674,14 @@ impl Hub {
                 }
                 ui.separator();
             }
+            if ui.button(action("Open its page")).clicked() {
+                acts.push(Act::Page(i, crate::docs::Tab::Overview));
+            }
             if ui.button(action("Read the README")).clicked() {
-                acts.push(Act::Docs(i, crate::docs::Kind::Readme));
+                acts.push(Act::Page(i, crate::docs::Tab::Readme));
             }
             if ui.button(action("Read the changelog")).clicked() {
-                acts.push(Act::Docs(i, crate::docs::Kind::Changelog));
+                acts.push(Act::Page(i, crate::docs::Tab::Changelog));
             }
             if let Some(page) = page.filter(|p| !p.is_empty())
                 && ui.button(action("Release page on GitHub")).clicked()
@@ -886,12 +815,6 @@ impl Hub {
     }
 }
 
-fn reader_column(area: Rect) -> Rect {
-    let width = (area.width() - 32.0).clamp(120.0, 860.0);
-    let left = area.center().x - width / 2.0;
-    Rect::from_min_max(pos2(left, area.top()), pos2(left + width, area.bottom()))
-}
-
 fn version_line(
     slot: &Slot,
     current: Option<&str>,
@@ -943,11 +866,11 @@ fn dot_ui(ui: &mut Ui, tint: Color32) {
     ui.painter().circle_filled(rect.center(), 3.0, tint);
 }
 
-fn rule(ui: &Ui, a: Pos2, b: Pos2) {
+pub(crate) fn rule(ui: &Ui, a: Pos2, b: Pos2) {
     ui.painter().line_segment([a, b], Stroke::new(1.0, ETCH));
 }
 
-fn face(font: FontId, color: Color32) -> TextFormat {
+pub(crate) fn face(font: FontId, color: Color32) -> TextFormat {
     TextFormat { font_id: font, color, ..Default::default() }
 }
 
@@ -973,7 +896,7 @@ fn search_id() -> Id {
     Id::new("search")
 }
 
-fn megabytes(bytes: u64) -> String {
+pub(crate) fn megabytes(bytes: u64) -> String {
     format!("{:.0} MB", (bytes as f64 / 1_000_000.0).max(1.0))
 }
 
@@ -994,7 +917,7 @@ fn ago(at: Instant) -> String {
     }
 }
 
-fn date(iso: &str) -> Option<String> {
+pub(crate) fn date(iso: &str) -> Option<String> {
     let mut parts = iso.get(..10)?.split('-');
     let (y, m, d) = (parts.next()?, parts.next()?, parts.next()?);
     let month =
@@ -1003,7 +926,7 @@ fn date(iso: &str) -> Option<String> {
     Some(format!("{} {month} {y}", d.parse::<u32>().ok()?))
 }
 
-fn skill_line(tool: &Tool, placed: &[Placed]) -> String {
+pub(crate) fn skill_line(tool: &Tool, placed: &[Placed]) -> String {
     let linked: Vec<&str> =
         placed.iter().filter(|p| p.how != How::Theirs).filter_map(|p| p.agent).collect();
     match placed.iter().find(|p| p.agent.is_none()) {
@@ -1016,7 +939,7 @@ fn skill_line(tool: &Tool, placed: &[Placed]) -> String {
     }
 }
 
-fn skill_hover(placed: &[Placed]) -> String {
+pub(crate) fn skill_hover(placed: &[Placed]) -> String {
     let mut lines: Vec<String> = placed
         .iter()
         .map(|p| {
@@ -1032,7 +955,7 @@ fn skill_hover(placed: &[Placed]) -> String {
     lines.join("\n")
 }
 
-fn tidy(path: &Path) -> String {
+pub(crate) fn tidy(path: &Path) -> String {
     match std::env::home_dir().and_then(|h| path.strip_prefix(h).ok().map(Path::to_path_buf)) {
         Some(rest) => format!("~/{}", rest.display()),
         None => path.display().to_string(),
@@ -1042,21 +965,6 @@ fn tidy(path: &Path) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn the_reading_column_is_centred_capped_and_never_not_a_number() {
-        let wide = reader_column(Rect::from_min_size(pos2(0.0, 50.0), vec2(1400.0, 900.0)));
-        assert_eq!(wide.width(), 860.0);
-        assert_eq!(wide.center().x, 700.0);
-        assert_eq!(wide.top(), 50.0);
-        let narrow = reader_column(Rect::from_min_size(pos2(0.0, 0.0), vec2(300.0, 400.0)));
-        assert_eq!(narrow.width(), 268.0);
-        let tiny = reader_column(Rect::from_min_size(pos2(0.0, 0.0), vec2(40.0, 400.0)));
-        assert_eq!(tiny.width(), 120.0);
-        for r in [wide, narrow, tiny] {
-            assert!(r.is_finite(), "{r:?}");
-        }
-    }
 
     #[test]
     fn a_release_date_reads_as_a_day() {

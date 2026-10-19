@@ -7,7 +7,8 @@ All notable changes to bench suite are listed here. The format follows
 ## [Unreleased]
 
 ### Added
-- radio_tool, firmware and codeplugs for TYT, Baofeng, Radioddity, Yaesu and Ailunce radios. The agent can run its file commands.
+- A page for every tool, opened by clicking its card: what it can do, a screenshot from its README, what it opens, what the coding agent can run on it, and its README and changelog.
+- radio_tool, firmware and codeplugs for TYT, Baofeng, Radioddity, Yaesu and Ailunce radios. The agent can run its file commands and open its window.
 
 ## [0.4.1] - 2026-10-19
 

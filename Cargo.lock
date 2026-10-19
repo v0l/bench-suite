@@ -168,6 +168,7 @@ dependencies = [
  "egui",
  "egui_bench",
  "egui_extras",
+ "image",
  "serde_json",
  "winresource",
 ]
@@ -880,9 +881,9 @@ dependencies = [
 
 [[package]]
 name = "egui_bench"
-version = "0.5.2"
+version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ce920ce0f9e3dce2311cfb61f4f6832d7f40ba00b3cfeabd85c3438bf87c320"
+checksum = "efefe6d798acdb2de42a10810dccf4bcf361b77dd4b3c079fa1c41074402df33"
 dependencies = [
  "dirs",
  "egui",
@@ -907,6 +908,7 @@ dependencies = [
  "ahash",
  "egui",
  "enum-map",
+ "image",
  "itertools",
  "log",
  "profiling",
@@ -1619,6 +1621,8 @@ dependencies = [
  "num-traits",
  "png 0.18.1",
  "tiff",
+ "zune-core",
+ "zune-jpeg",
 ]
 
 [[package]]
