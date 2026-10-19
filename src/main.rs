@@ -3,6 +3,7 @@
 mod agent;
 mod app;
 mod catalog;
+mod docs;
 mod guides;
 mod install;
 mod skills;

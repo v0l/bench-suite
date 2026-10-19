@@ -6,6 +6,9 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- A README and changelog reader for every tool and the suite, in the card menu and from "what is new" on the update banner, with a key to open the page in a browser.
+
 ## [0.4.0] - 2026-10-19
 
 ### Added

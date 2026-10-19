@@ -82,6 +82,8 @@ pub enum Act {
     Restart,
     Url(String),
     ShowAll,
+    Docs(usize, crate::docs::Kind),
+    SuiteDocs(crate::docs::Kind),
 }
 
 pub struct Hub {
@@ -95,6 +97,7 @@ pub struct Hub {
     pub checked: Option<Instant>,
     pub removing: Option<usize>,
     pub agent: crate::agent::Page,
+    pub reader: crate::docs::Reader,
 }
 
 impl Hub {
@@ -138,6 +141,7 @@ impl Hub {
             search: String::new(),
             checked: None,
             removing: None,
+            reader: crate::docs::Reader::default(),
             agent: crate::agent::new(
                 &cc.egui_ctx,
                 cc.storage.and_then(|s| s.get_string(AGENT_OPEN_KEY)).is_some_and(|v| v == "1"),
@@ -388,6 +392,11 @@ impl Hub {
                 },
                 Act::Url(url) => ctx.open_url(egui::OpenUrl::new_tab(url)),
                 Act::Pick(i) => self.pick(i),
+                Act::Docs(i, kind) => {
+                    let repo = self.slots[i].tool.repo;
+                    self.reader.show(repo, kind);
+                }
+                Act::SuiteDocs(kind) => self.reader.show(SUITE.repo, kind),
                 Act::ShowAll => {
                     self.filter = Filter::All;
                     self.search.clear();
