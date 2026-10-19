@@ -6,6 +6,9 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- On macOS the agent's shell could not resolve names or run a compiler, so downloads, git and builds failed.
+
 ### Changed
 - radio_tool opens its window, and a `.rdt` codeplug dropped on the suite opens in it.
 
