@@ -1,9 +1,9 @@
 [package]
 name = "bench-suite"
-description = "Installs, updates and launches the bench tools: gcad, agentee, printfarm, antenna toolbox, thermview, cycler and waveshark"
+description = "Installs, updates and launches the bench tools: gcad, agentee, printfarm, antenna toolbox, thermview, battery control, cycler and waveshark, and runs a coding agent that uses them"
 version = "0.3.0"
 edition = "2024"
-rust-version = "1.92"
+rust-version = "1.95"
 license = "MIT"
 repository = "https://github.com/v0l/bench-suite"
 
@@ -17,8 +17,9 @@ eframe = { version = "0.35", default-features = false, features = [
     "x11",
 ] }
 egui = "0.35"
-egui_bench = { git = "https://github.com/v0l/egui_bench", features = ["update"] }
+egui_bench = { version = "0.5.1", features = ["update", "agent", "sandbox"] }
 egui_extras = { version = "0.35", default-features = false, features = ["svg"] }
+serde_json = "1"
 
 [target.'cfg(windows)'.build-dependencies]
 winresource = "0.1"
@@ -26,3 +27,4 @@ winresource = "0.1"
 [profile.release]
 opt-level = 3
 lto = "thin"
+

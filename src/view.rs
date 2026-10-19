@@ -12,6 +12,12 @@ use egui_bench::update::{Install, State};
 use std::path::Path;
 use std::time::{Duration, Instant};
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Page {
+    Tools,
+    Agent,
+}
+
 const PAGE: f32 = 20.0;
 const GAP: f32 = 12.0;
 const CARD_MIN_W: f32 = 320.0;
@@ -30,6 +36,7 @@ pub fn icon(tool: &Tool) -> ImageSource<'static> {
         "antenna-toolbox" => egui::include_image!("../assets/icons/antenna-toolbox.svg"),
         "printfarm" => egui::include_image!("../assets/icons/printfarm.svg"),
         "thermview" => egui::include_image!("../assets/icons/thermview.svg"),
+        "battery-control" => egui::include_image!("../assets/icons/battery-control.svg"),
         "cycler" => egui::include_image!("../assets/icons/cycler.svg"),
         "waveshark" => egui::include_image!("../assets/icons/waveshark.svg"),
         _ => egui::include_image!("../assets/icons/bench-suite.svg"),
@@ -40,6 +47,7 @@ impl eframe::App for Hub {
     fn ui(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
         self.reap(&ctx);
+        self.agent.poll();
         self.dropped(&ctx);
         let mut acts = Vec::new();
         if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::F))
@@ -62,6 +70,10 @@ impl eframe::App for Hub {
             let r = ui.max_rect();
             ui.painter().rect_filled(r, 0.0, CHASSIS);
             rule(ui, r.left_top(), r.right_top());
+            if self.agent.open {
+                self.agent.show(ui);
+                return;
+            }
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 egui::Frame::NONE
                     .inner_margin(egui::Margin::symmetric(PAGE as i8, 16))
@@ -70,10 +82,13 @@ impl eframe::App for Hub {
         });
         self.confirm_removal(&ctx, &mut acts);
         self.apply(&ctx, acts);
+        egui_bench::agent::serve(self, &ctx);
         self.browse(&ctx);
         self.drop_overlay(&ctx);
         let live = self.slots.iter().any(|s| !s.running.is_empty() || s.updater.busy())
-            || self.suite.busy();
+            || self.suite.busy()
+            || self.agent.live()
+            || self.agent.needs_you();
         if live {
             ctx.request_repaint_after(Duration::from_millis(250));
         }
@@ -94,6 +109,8 @@ impl Hub {
             job.append("BENCH SUITE", 0.0, tracked(legend_font(16.0), VALUE, 2.0));
             job.append(env!("CARGO_PKG_VERSION"), 10.0, face(figure(12.0), LEGEND));
             ui.label(job);
+            ui.add_space(28.0);
+            self.page_tabs(ui);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let label = if checking { "checking" } else { "check for updates" };
                 let r = ui
@@ -104,7 +121,7 @@ impl Hub {
                 }
                 ui.add_space(8.0);
                 let room = (ui.available_width() - 16.0).min(240.0);
-                if room < 120.0 {
+                if room < 120.0 || self.agent.open {
                     return;
                 }
                 ui.scope(|ui| {
@@ -118,6 +135,17 @@ impl Hub {
                 });
             });
         });
+    }
+
+    fn page_tabs(&mut self, ui: &mut Ui) {
+        let mut page = if self.agent.open { Page::Agent } else { Page::Tools };
+        let agent = match (self.agent.needs_you(), self.agent.chat.busy()) {
+            (true, _) => "agent needs you",
+            (false, true) => "agent working",
+            (false, false) => "agent",
+        };
+        segments(ui, &mut page, &[(Page::Tools, "tools", None), (Page::Agent, agent, None)]);
+        self.agent.open = page == Page::Agent;
     }
 
     fn suite_banner_wanted(&self) -> bool {

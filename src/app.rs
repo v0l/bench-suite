@@ -8,6 +8,7 @@ use std::process::{Child, Command, Stdio};
 use std::time::Instant;
 
 const RECENT_MAX: usize = 6;
+const AGENT_OPEN_KEY: &str = "agent.open";
 const TOOLS_ENV: &str = "BENCH_SUITE_TOOLS";
 
 pub struct Slot {
@@ -93,6 +94,7 @@ pub struct Hub {
     pub search: String,
     pub checked: Option<Instant>,
     pub removing: Option<usize>,
+    pub agent: crate::agent::Page,
 }
 
 impl Hub {
@@ -136,6 +138,10 @@ impl Hub {
             search: String::new(),
             checked: None,
             removing: None,
+            agent: crate::agent::new(
+                &cc.egui_ctx,
+                cc.storage.and_then(|s| s.get_string(AGENT_OPEN_KEY)).is_some_and(|v| v == "1"),
+            ),
         };
         hub.check(&cc.egui_ctx);
         hub
@@ -170,7 +176,7 @@ impl Hub {
                     .any(|t| t.to_lowercase().contains(&q)))
     }
 
-    fn check(&mut self, ctx: &egui::Context) {
+    pub(crate) fn check(&mut self, ctx: &egui::Context) {
         self.suite.check(ctx);
         for slot in &self.slots {
             slot.updater.check(ctx);
@@ -179,22 +185,28 @@ impl Hub {
     }
 
     fn install(&mut self, ctx: &egui::Context, i: usize) {
-        let Some(target) = self.target else {
-            self.say("no builds are published for this machine", true);
-            return;
-        };
+        if let Err(e) = self.try_install(ctx, i) {
+            self.say(&e, true);
+        }
+    }
+
+    pub(crate) fn try_install(&mut self, ctx: &egui::Context, i: usize) -> Result<(), String> {
+        let target = self.target.ok_or("no builds are published for this machine")?;
         let slot = &mut self.slots[i];
         let tool = slot.tool;
         let Some((release, asset)) = slot.installable(Some(target)) else {
-            return;
+            return Err(format!("{} has no build to install for this machine", tool.title));
         };
-        let Some(package) = tool.package(target, &release.tag) else { return };
+        let Some(package) = tool.package(target, &release.tag) else {
+            return Err(format!("{} has no build to install for this machine", tool.title));
+        };
         slot.settled = false;
         self.status = None;
         let version = release.version.clone();
         slot.updater.install(ctx, &release, &asset, move |file| {
             install::place(tool, target, &package, &version, file)
         });
+        Ok(())
     }
 
     fn update_self(&mut self, ctx: &egui::Context) {
@@ -231,11 +243,17 @@ impl Hub {
     }
 
     pub fn launch(&mut self, i: usize, path: Option<PathBuf>) {
+        match self.try_launch(i, path) {
+            Ok(what) => self.say(&what, false),
+            Err(e) => self.say(&e, true),
+        }
+    }
+
+    pub(crate) fn try_launch(&mut self, i: usize, path: Option<PathBuf>) -> Result<String, String> {
         let slot = &mut self.slots[i];
         let title = slot.tool.title;
         let Some(exe) = slot.exe.clone() else {
-            self.say(&format!("{title} is not installed"), true);
-            return;
+            return Err(format!("{title} is not installed"));
         };
         let path = path.map(|p| std::fs::canonicalize(&p).unwrap_or(p));
         let mut cmd = Command::new(&exe);
@@ -254,22 +272,18 @@ impl Hub {
             cmd.current_dir(dir);
         }
         no_console(&mut cmd);
-        match cmd.spawn() {
-            Ok(child) => {
-                slot.running.push(child);
-                let what = match &path {
-                    Some(p) => format!("opened {} in {title}", file_label(p)),
-                    None => format!("started {title}"),
-                };
-                if let Some(p) = path {
-                    slot.recent.retain(|r| r != &p);
-                    slot.recent.insert(0, p);
-                    slot.recent.truncate(RECENT_MAX);
-                }
-                self.say(&what, false);
-            }
-            Err(e) => self.say(&format!("{title} would not start: {e}"), true),
+        let child = cmd.spawn().map_err(|e| format!("{title} would not start: {e}"))?;
+        slot.running.push(child);
+        let what = match &path {
+            Some(p) => format!("opened {} in {title}", file_label(p)),
+            None => format!("started {title}"),
+        };
+        if let Some(p) = path {
+            slot.recent.retain(|r| r != &p);
+            slot.recent.insert(0, p);
+            slot.recent.truncate(RECENT_MAX);
         }
+        Ok(what)
     }
 
     pub fn reap(&mut self, ctx: &egui::Context) {
@@ -401,6 +415,7 @@ impl Hub {
     }
 
     pub fn save_recent(&self, storage: &mut dyn eframe::Storage) {
+        storage.set_string(AGENT_OPEN_KEY, if self.agent.open { "1" } else { "0" }.into());
         for slot in &self.slots {
             let list: Vec<String> =
                 slot.recent.iter().map(|p| p.to_string_lossy().into_owned()).collect();

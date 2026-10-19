@@ -102,6 +102,9 @@ pub struct Tool {
     pub title: &'static str,
     pub tagline: &'static str,
     pub blurb: &'static str,
+    pub guide: &'static str,
+    pub cli: &'static [&'static str],
+    pub cli_bin: &'static str,
     pub group: Group,
     pub repo: &'static str,
     pub bin: &'static str,
@@ -171,13 +174,16 @@ fn waveshark(tool: &Tool, target: Target, tag: &str) -> Option<Package> {
     Some(Package { name, archive })
 }
 
-pub const TOOLS: [Tool; 7] = [
+pub const TOOLS: [Tool; 8] = [
     Tool {
         name: "gcad",
         title: "gcad",
         tagline: "Parametric CAD, one operation per line",
         blurb: "Parts and assemblies written like G-code. Mates, joints, torque sims, and \
                 STEP, STL, 3MF or drawings out.",
+        guide: crate::guides::GCAD,
+        cli: &["check", "measure", "query", "export", "sim", "materials", "bom", "render", "docs"],
+        cli_bin: "",
         group: Group::Design,
         repo: "v0l/gcad",
         bin: "gcad",
@@ -193,6 +199,43 @@ pub const TOOLS: [Tool; 7] = [
         tagline: "Electronics design in plain TOML",
         blurb: "Boards, schematics, layouts and simulations as text files. Opens a project \
                 folder and reloads as the files change.",
+        guide: crate::guides::AGENTEE,
+        cli: &[
+            "check",
+            "drc",
+            "list",
+            "show",
+            "render",
+            "new",
+            "import",
+            "search",
+            "sim",
+            "sparam",
+            "models",
+            "fab",
+            "export",
+            "assemble",
+            "parts",
+            "bom",
+            "fill",
+            "route",
+            "tie",
+            "tune",
+            "neck",
+            "place",
+            "silk",
+            "testpoints",
+            "calc",
+            "layout",
+            "fit",
+            "pinswap",
+            "stackups",
+            "edit",
+            "datasheet",
+            "library",
+            "docs",
+        ],
+        cli_bin: "",
         group: Group::Design,
         repo: "v0l/agentee",
         bin: "agentee",
@@ -215,6 +258,9 @@ pub const TOOLS: [Tool; 7] = [
         tagline: "Every 3D printer in one window",
         blurb: "State, temperatures, progress and camera for each printer, with a job queue \
                 and the history of every print.",
+        guide: crate::guides::PRINTFARM,
+        cli: &[],
+        cli_bin: "",
         group: Group::Design,
         repo: "v0l/printfarm",
         bin: "printfarm",
@@ -229,6 +275,9 @@ pub const TOOLS: [Tool; 7] = [
         title: "Antenna Toolbox",
         tagline: "Antenna models, NanoVNA and path planning",
         blurb: "Model an antenna, sweep it with a NanoVNA, and plan a radio path over terrain.",
+        guide: crate::guides::ANTENNA_TOOLBOX,
+        cli: &[],
+        cli_bin: "",
         group: Group::Radio,
         repo: "v0l/antenna-toolbox",
         bin: "antenna-toolbox",
@@ -244,6 +293,9 @@ pub const TOOLS: [Tool; 7] = [
         tagline: "Wireshark for the radio spectrum",
         blurb: "Leave an SDR on a band and it tells you what is transmitting around you, \
                 decoded or not.",
+        guide: crate::guides::WAVESHARK,
+        cli: &[],
+        cli_bin: "",
         group: Group::Radio,
         repo: "v0l/waveshark",
         bin: "waveshark",
@@ -259,6 +311,9 @@ pub const TOOLS: [Tool; 7] = [
         tagline: "Radiometric thermal image viewer",
         blurb: "Temperatures from InfiRay, Hikmicro, DJI and FLIR files, with spot, line and \
                 area readings.",
+        guide: crate::guides::THERMVIEW,
+        cli: &["info", "render"],
+        cli_bin: "",
         group: Group::Measure,
         repo: "v0l/thermview",
         bin: "thermview",
@@ -269,11 +324,32 @@ pub const TOOLS: [Tool; 7] = [
         asset: unversioned,
     },
     Tool {
+        name: "battery-control",
+        title: "Battery Control",
+        tagline: "Monitor and control any battery",
+        blurb: "Cells, charge, temperatures, outputs and settings for BMSes and power stations \
+                over Bluetooth or a serial cable.",
+        guide: crate::guides::BATTERY_CONTROL,
+        cli: &[],
+        cli_bin: "",
+        group: Group::Measure,
+        repo: "v0l/battery-control",
+        bin: "battery-control",
+        verb: &[],
+        opens: Opens::Nothing,
+        version_flag: true,
+        skill: None,
+        asset: unversioned,
+    },
+    Tool {
         name: "cycler",
         title: "Cycler",
         tagline: "Battery cell cycle testing",
         blurb: "Charge, discharge and capacity runs on a cell, through the BMS or charger \
                 it is wired to.",
+        guide: crate::guides::CYCLER,
+        cli: &["devices", "profile"],
+        cli_bin: "cycler",
         group: Group::Measure,
         repo: "v0l/cycler",
         bin: "cycler-ui",
@@ -290,6 +366,9 @@ pub const SUITE: Tool = Tool {
     title: "bench suite",
     tagline: "",
     blurb: "",
+    guide: "",
+    cli: &[],
+    cli_bin: "",
     group: Group::Design,
     repo: "v0l/bench-suite",
     bin: "bench-suite",
@@ -361,6 +440,10 @@ mod tests {
         assert_eq!(
             name("antenna-toolbox", Target::LinuxArm64, "v0.1.0"),
             "antenna-toolbox-v0.1.0-aarch64-unknown-linux-gnu.tar.gz"
+        );
+        assert_eq!(
+            name("battery-control", Target::LinuxX64, "v0.2.0"),
+            "battery-control-x86_64-unknown-linux-gnu.tar.gz"
         );
         assert_eq!(
             name("printfarm", Target::MacArm64, "v0.1.0"),

@@ -1,12 +1,17 @@
 #![cfg_attr(all(target_os = "windows", not(debug_assertions)), windows_subsystem = "windows")]
 
+mod agent;
 mod app;
 mod catalog;
+mod guides;
 mod install;
 mod skills;
 mod view;
 
 fn main() -> eframe::Result<()> {
+    if let Some(code) = agent::run_helper() {
+        std::process::exit(code);
+    }
     let mut viewport = egui::ViewportBuilder::default()
         .with_inner_size([1120.0, 760.0])
         .with_min_inner_size([420.0, 400.0])

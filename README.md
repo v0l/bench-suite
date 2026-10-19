@@ -12,6 +12,7 @@ releases, keeps it up to date, and starts it.
 | [WaveShark](https://github.com/v0l/waveshark) | Wireshark for the radio spectrum |
 | [thermview](https://github.com/v0l/thermview) | Radiometric thermal images from InfiRay, Hikmicro, DJI and FLIR |
 | [Cycler](https://github.com/v0l/cycler) | Cell-level battery cycle testing |
+| [Battery Control](https://github.com/v0l/battery-control) | Monitor and control BMSes and power stations over Bluetooth or serial |
 
 Every tool keeps its own repo, version and release. The suite only reads them.
 
@@ -38,6 +39,28 @@ Tools the suite installs live in its data folder
 way, beside the launcher, in a folder listed in `BENCH_SUITE_TOOLS` or on
 `PATH`, is found and launched too, and its version is read with `--version`
 where the tool has one.
+
+## Agent chat
+
+The Agent key in the header turns the window into a coding agent. Under Model it takes the
+address of any server speaking the OpenAI chat completions API with tool calls (OpenAI,
+OpenRouter, llama.cpp, vLLM, Ollama), the model to ask for, a key where the server wants one,
+and a workspace folder (`~/Documents/bench-suite` by default).
+
+The agent loads a tool's skill, writes the tool's files in the workspace, and runs the tool's
+headless command line to check them, then opens the result in the tool's own window. It reads
+the skills in `~/.agents/skills` and in the workspace's `.agents/skills`. File tools stay inside
+the workspace. `run_tool` only runs the subcommands listed for each tool in `src/catalog.rs`,
+with paths inside the workspace. `bash` runs shell commands in an OS sandbox (Landlock on Linux,
+Seatbelt on macOS): the system and the tools are readable, only the workspace is writable, the
+rest of your files are hidden from it and the network is open. Windows has no sandbox yet, so
+`bash` is not offered there. When the work needs a folder outside the workspace the agent calls `request_access` and you
+choose read only, read and write, or no; the sandbox and the file tools then reach exactly that
+folder and nothing around it. `run_tool` takes a shared folder's path only if it was shared for
+writing. It can also install, update, start and (after you confirm)
+uninstall tools.
+
+Settings are kept in `bench-suite/agent` in your config folder, readable by you only.
 
 ## Agent skills
 

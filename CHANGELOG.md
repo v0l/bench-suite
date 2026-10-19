@@ -6,6 +6,29 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Battery Control, a live monitor and control window for BMSes and power stations.
+- A coding agent that fills the window, opened with the Agent key in the header. It talks to any
+  OpenAI-compatible server (set under Model) and renders its replies as markdown, with code
+  blocks you can copy, tables, lists and links.
+- It loads the agent skills of the installed tools (`load_skill`), reads and writes files in a
+  workspace folder, and runs each tool's headless command line (`gcad check`, `agentee edit`,
+  `thermview render` and the like) to check its own work. It cannot leave the workspace, run
+  anything but the listed subcommands, or start a tool's window except through `launch`.
+- A `bash` tool runs shell commands in an OS sandbox (Landlock on Linux, Seatbelt on macOS, through
+  the `nono` crate): it reads the system and the installed tools, writes only inside the workspace,
+  and cannot read the rest of your files. The network is open. Not available on Windows.
+- `request_access` asks you to share a folder outside the workspace, with a reason, and you choose
+  read only, read and write, or no. The file tools and `bash` can then use it until you click it
+  away or clear the chat. Credential folders and the whole home folder are refused without asking,
+  and the tab reads "agent needs you" while a request waits.
+- It can also list the tools, check for updates, install or update one, start one on a file, and
+  ask you to confirm an uninstall. It is told what each tool does and which files it opens.
+
+### Fixed
+- Restarting after an update opened nothing and said file not found, because the running program
+  was looked up by the name the update had just moved it to.
+
 ## [0.3.0] - 2026-10-18
 
 ### Added
