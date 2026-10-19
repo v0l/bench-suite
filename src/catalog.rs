@@ -361,12 +361,12 @@ pub const TOOLS: [Tool; 9] = [
             "A command line for scripts and for files",
         ],
         cli: &["fw-info", "codeplug-info", "wrap", "unwrap", "make-xor", "models"],
-        cli_bin: "",
+        cli_bin: "radio_tool",
         group: Group::Radio,
         repo: "v0l/radio_tool",
-        bin: "radio_tool",
+        bin: "radio_tool-ui",
         verb: &[],
-        opens: Opens::Nothing,
+        opens: Opens::Files(&[".rdt"]),
         version_flag: true,
         skill: None,
         asset: unversioned,
@@ -568,6 +568,7 @@ mod tests {
         assert_eq!(routed("main.PCB.toml"), Some("agentee"));
         assert_eq!(routed("IR_0001.JPG"), Some("thermview"));
         assert_eq!(routed("case-left.gcode"), Some("printfarm"));
+        assert_eq!(routed("dm1701.rdt"), Some("radio_tool"));
         assert_eq!(routed("notes.txt"), None);
         assert_eq!(routed("Cargo.toml"), None);
     }
