@@ -6,6 +6,8 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-10-19
+
 ### Fixed
 - On macOS the agent's shell could not resolve names or run a compiler, so downloads, git and builds failed.
 
