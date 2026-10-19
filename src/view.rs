@@ -39,6 +39,7 @@ pub fn icon(tool: &Tool) -> ImageSource<'static> {
         "battery-control" => egui::include_image!("../assets/icons/battery-control.svg"),
         "cycler" => egui::include_image!("../assets/icons/cycler.svg"),
         "waveshark" => egui::include_image!("../assets/icons/waveshark.svg"),
+        "radio_tool" => egui::include_image!("../assets/icons/radio_tool.svg"),
         _ => egui::include_image!("../assets/icons/bench-suite.svg"),
     }
 }

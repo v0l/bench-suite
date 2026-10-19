@@ -174,7 +174,7 @@ fn waveshark(tool: &Tool, target: Target, tag: &str) -> Option<Package> {
     Some(Package { name, archive })
 }
 
-pub const TOOLS: [Tool; 8] = [
+pub const TOOLS: [Tool; 9] = [
     Tool {
         name: "gcad",
         title: "gcad",
@@ -304,6 +304,24 @@ pub const TOOLS: [Tool; 8] = [
         version_flag: true,
         skill: None,
         asset: waveshark,
+    },
+    Tool {
+        name: "radio_tool",
+        title: "radio_tool",
+        tagline: "Firmware and codeplugs for handheld radios",
+        blurb: "Flash firmware and read or write codeplugs on TYT, Baofeng, Radioddity, \
+                Yaesu and Ailunce radios, over USB, a cable or Bluetooth.",
+        guide: crate::guides::RADIO_TOOL,
+        cli: &["fw-info", "codeplug-info", "wrap", "unwrap", "make-xor", "models"],
+        cli_bin: "",
+        group: Group::Radio,
+        repo: "v0l/radio_tool",
+        bin: "radio_tool",
+        verb: &[],
+        opens: Opens::Nothing,
+        version_flag: true,
+        skill: None,
+        asset: unversioned,
     },
     Tool {
         name: "thermview",
@@ -450,6 +468,10 @@ mod tests {
             "printfarm-aarch64-apple-darwin.tar.gz"
         );
         assert_eq!(name("waveshark", Target::LinuxX64, "v0.4.0"), "waveshark-0.4.0-linux-x86_64");
+        assert_eq!(
+            name("radio_tool", Target::WindowsX64, "v0.4.0"),
+            "radio_tool-x86_64-pc-windows-msvc.zip"
+        );
         assert_eq!(
             SUITE.package(Target::WindowsX64, "v0.1.0").unwrap().name,
             "bench-suite-x86_64-pc-windows-msvc.zip"

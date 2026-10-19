@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="t d">
+  <title id="t">radio_tool</title>
+  <desc id="d">A handheld radio with its antenna up, its screen showing a firmware write part way through.</desc>
+  <rect width="64" height="64" rx="14" fill="#0B1014"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M40 18V6" stroke="#2FD3E1" stroke-width="3.2"/>
+    <rect x="20" y="18" width="24" height="40" rx="4" stroke="#2FD3E1" stroke-width="3.2"/>
+    <rect x="25" y="23" width="14" height="10" rx="1.5" stroke="#22333D" stroke-width="1.5"/>
+    <path d="M28 28h5" stroke="#FFB020" stroke-width="3"/>
+    <path d="M26 40h4M34 40h4M26 46h4M34 46h4M26 52h4M34 52h4" stroke="#22333D" stroke-width="2.5"/>
+    <path d="M16 26v10" stroke="#2FD3E1" stroke-width="3" opacity=".6"/>
+  </g>
+</svg>

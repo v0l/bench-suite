@@ -10,6 +10,7 @@ releases, keeps it up to date, and starts it.
 | [printfarm](https://github.com/v0l/printfarm) | Every 3D printer in one window: state, temperatures, camera, job queue and history |
 | [Antenna Toolbox](https://github.com/v0l/antenna-toolbox) | Antenna modelling, NanoVNA control and radio path planning |
 | [WaveShark](https://github.com/v0l/waveshark) | Wireshark for the radio spectrum |
+| [radio_tool](https://github.com/v0l/radio_tool) | Firmware and codeplugs for TYT, Baofeng, Radioddity, Yaesu and Ailunce radios |
 | [thermview](https://github.com/v0l/thermview) | Radiometric thermal images from InfiRay, Hikmicro, DJI and FLIR |
 | [Cycler](https://github.com/v0l/cycler) | Cell-level battery cycle testing |
 | [Battery Control](https://github.com/v0l/battery-control) | Monitor and control BMSes and power stations over Bluetooth or serial |
