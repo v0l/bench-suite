@@ -234,19 +234,15 @@ impl Hub {
                 Some((msg, fault)) => {
                     let (tint, dot) = if fault { (FAULT, FAULT) } else { (VALUE, OK) };
                     dot_ui(ui, dot);
-                    ui.label(egui::RichText::new(msg).font(FontId::proportional(12.5)).color(tint));
-                    if ui.small_button("dismiss").clicked() {
+                    Line::new().note(msg).tint(tint).show(ui);
+                    if ui.add(Key::new("dismiss").outline(VALUE)).clicked() {
                         self.status = None;
                     }
                 }
                 None if !self.checking() && self.check_failure().is_some() => {
                     dot_ui(ui, FAULT);
                     let e = self.check_failure().unwrap_or_default();
-                    ui.label(
-                        egui::RichText::new(format!("could not check for updates: {e}"))
-                            .font(FontId::proportional(12.5))
-                            .color(FAULT),
-                    );
+                    Line::new().note(format!("could not check for updates: {e}")).tint(FAULT).show(ui);
                 }
                 None if self.slots.iter().any(|s| s.updater.install_state().busy()) => {
                     let names: Vec<&str> = self
@@ -256,11 +252,7 @@ impl Hub {
                         .map(|s| s.tool.title)
                         .collect();
                     dot_ui(ui, READOUT);
-                    ui.label(
-                        egui::RichText::new(format!("installing {}", names.join(", ")))
-                            .font(FontId::proportional(12.5))
-                            .color(VALUE),
-                    );
+                    Line::new().note(format!("installing {}", names.join(", "))).tint(VALUE).show(ui);
                 }
                 None => {
                     let text = match (self.checking(), self.checked) {
@@ -268,19 +260,15 @@ impl Hub {
                         (false, Some(at)) => format!("checked for updates {}", ago(at)),
                         (false, None) => "not checked for updates yet".to_string(),
                     };
-                    ui.label(
-                        egui::RichText::new(text).font(FontId::proportional(12.5)).color(LEGEND),
-                    );
+                    Line::new().note(text).show(ui);
                 }
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let target = self.target.map(Target::label).unwrap_or("no published build");
-                ui.label(
-                    egui::RichText::new(format!("installing for {target}"))
-                        .font(FontId::proportional(12.5))
-                        .color(LEGEND),
-                )
-                .on_hover_text(format!("tools are kept in {}", tidy(&install::root())));
+                Line::new()
+                    .note(format!("installing for {target}"))
+                    .show(ui)
+                    .on_hover_text(format!("tools are kept in {}", tidy(&install::root())));
             });
         });
     }
@@ -657,9 +645,7 @@ impl Hub {
                     ui.label(legend("recent"));
                     for path in &slot.recent {
                         let there = path.exists();
-                        let text = egui::RichText::new(file_label(path))
-                            .font(FontId::proportional(13.0))
-                            .color(if there { VALUE } else { LEGEND });
+                        let text = value(file_label(path)).color(if there { VALUE } else { LEGEND });
                         if ui
                             .add_enabled(there, egui::Button::new(text))
                             .on_hover_text(tidy(path))
@@ -740,7 +726,7 @@ impl Hub {
         ui.vertical_centered(|ui| {
             ui.label(egui::RichText::new(title).font(legend_font(20.0)).color(VALUE));
             ui.add_space(6.0);
-            ui.label(egui::RichText::new(body).font(FontId::proportional(13.0)).color(LEGEND));
+            note(ui, body, LEGEND);
             ui.add_space(14.0);
             if self.filter == Filter::Installed
                 && self.pending() > 0
@@ -760,20 +746,20 @@ impl Hub {
     fn confirm_removal(&mut self, ctx: &egui::Context, acts: &mut Vec<Act>) {
         let Some(i) = self.removing else { return };
         let tool = self.slots[i].tool;
-        let modal = egui::Modal::new(Id::new("remove")).show(ctx, |ui| {
+        let modal = egui::Modal::new(Id::new("remove"))
+            .backdrop_color(egui::Color32::from_black_alpha(150))
+            .show(ctx, |ui| {
             ui.set_width(380.0);
-            ui.label(egui::RichText::new(format!("Uninstall {}?", tool.title)).font(legend_font(19.0)).color(VALUE));
-            ui.add_space(6.0);
-            ui.label(
-                egui::RichText::new(format!(
+            modal_title(ui, &format!("Uninstall {}?", tool.title));
+            note(
+                ui,
+                format!(
                     "This deletes {}. Your own files are not touched, and you can install it again from here.",
                     tidy(&install::home(tool))
-                ))
-                .font(FontId::proportional(13.0))
-                .color(LEGEND),
+                ),
+                LEGEND,
             );
-            ui.add_space(14.0);
-            ui.horizontal(|ui| {
+            footer(ui, |ui| {
                 if ui.add(Key::new("uninstall").solid(FAULT).min_width(120.0)).clicked() {
                     acts.push(Act::Remove(i));
                     self.removing = None;
