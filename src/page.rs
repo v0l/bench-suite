@@ -252,9 +252,14 @@ impl Hub {
                 section(ui, "recent", "click to open again", |ui| {
                     for path in &recent {
                         let there = path.exists();
-                        let text = value(crate::app::file_label(path)).color(if there { VALUE } else { LEGEND });
+                        let text = crate::app::file_label(path);
                         if ui
-                            .add_enabled(there, egui::Button::new(text))
+                            .add(
+                                Key::new(text)
+                                    .outline(if there { VALUE } else { LEGEND })
+                                    .enabled(there)
+                                    .min_width(ui.available_width()),
+                            )
                             .on_hover_text(tidy(path))
                             .clicked()
                         {

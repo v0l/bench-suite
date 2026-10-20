@@ -242,7 +242,10 @@ impl Hub {
                 None if !self.checking() && self.check_failure().is_some() => {
                     dot_ui(ui, FAULT);
                     let e = self.check_failure().unwrap_or_default();
-                    Line::new().note(format!("could not check for updates: {e}")).tint(FAULT).show(ui);
+                    Line::new()
+                        .note(format!("could not check for updates: {e}"))
+                        .tint(FAULT)
+                        .show(ui);
                 }
                 None if self.slots.iter().any(|s| s.updater.install_state().busy()) => {
                     let names: Vec<&str> = self
@@ -252,7 +255,10 @@ impl Hub {
                         .map(|s| s.tool.title)
                         .collect();
                     dot_ui(ui, READOUT);
-                    Line::new().note(format!("installing {}", names.join(", "))).tint(VALUE).show(ui);
+                    Line::new()
+                        .note(format!("installing {}", names.join(", ")))
+                        .tint(VALUE)
+                        .show(ui);
                 }
                 None => {
                     let text = match (self.checking(), self.checked) {
@@ -637,7 +643,8 @@ impl Hub {
             if slot.exe.is_some() && !tool.suffixes().is_empty() {
                 let label =
                     if tool.takes_folders() { "Open a project…" } else { "Open a file…" };
-                if ui.button(action(label)).clicked() {
+                if ui.add(Key::new(label).outline(VALUE).min_width(ui.available_width())).clicked()
+                {
                     acts.push(Act::Pick(i));
                 }
                 if !slot.recent.is_empty() {
@@ -645,52 +652,88 @@ impl Hub {
                     ui.label(legend("recent"));
                     for path in &slot.recent {
                         let there = path.exists();
-                        let text = value(file_label(path)).color(if there { VALUE } else { LEGEND });
+                        let text = file_label(path);
                         if ui
-                            .add_enabled(there, egui::Button::new(text))
+                            .add(
+                                Key::new(text)
+                                    .outline(if there { VALUE } else { LEGEND })
+                                    .enabled(there)
+                                    .min_width(ui.available_width()),
+                            )
                             .on_hover_text(tidy(path))
                             .clicked()
                         {
                             acts.push(Act::Launch(i, Some(path.clone())));
                         }
                     }
-                    if ui.button(action("Forget recent files")).clicked() {
+                    if ui
+                        .add(
+                            Key::new("Forget recent files")
+                                .outline(VALUE)
+                                .min_width(ui.available_width()),
+                        )
+                        .clicked()
+                    {
                         acts.push(Act::Forget(i));
                     }
                 }
-                ui.separator();
             }
-            if ui.button(action("Open its page")).clicked() {
+            if ui
+                .add(Key::new("Open its page").outline(VALUE).min_width(ui.available_width()))
+                .clicked()
+            {
                 acts.push(Act::Page(i, crate::docs::Tab::Overview));
             }
-            if ui.button(action("Read the README")).clicked() {
+            if ui
+                .add(Key::new("Read the README").outline(VALUE).min_width(ui.available_width()))
+                .clicked()
+            {
                 acts.push(Act::Page(i, crate::docs::Tab::Readme));
             }
-            if ui.button(action("Read the changelog")).clicked() {
+            if ui
+                .add(Key::new("Read the changelog").outline(VALUE).min_width(ui.available_width()))
+                .clicked()
+            {
                 acts.push(Act::Page(i, crate::docs::Tab::Changelog));
             }
             if let Some(page) = page.filter(|p| !p.is_empty())
-                && ui.button(action("Release page on GitHub")).clicked()
+                && ui
+                    .add(
+                        Key::new("Release page on GitHub")
+                            .outline(VALUE)
+                            .min_width(ui.available_width()),
+                    )
+                    .clicked()
             {
                 acts.push(Act::Url(page));
             }
-            if ui.button(action("Source on GitHub")).clicked() {
+            if ui
+                .add(Key::new("Source on GitHub").outline(VALUE).min_width(ui.available_width()))
+                .clicked()
+            {
                 acts.push(Act::Url(format!("https://github.com/{}", tool.repo)));
             }
-            if slot.exe.is_some() && ui.button(action("Show in folder")).clicked() {
+            if slot.exe.is_some()
+                && ui
+                    .add(Key::new("Show in folder").outline(VALUE).min_width(ui.available_width()))
+                    .clicked()
+            {
                 acts.push(Act::Reveal(i));
             }
             if let Ok(placed) = &slot.skills
                 && let Some(shared) = placed.iter().find(|p| p.agent.is_none())
-                && ui.button(action("Show agent skill")).on_hover_text(tidy(&shared.path)).clicked()
+                && ui
+                    .add(
+                        Key::new("Show agent skill").outline(VALUE).min_width(ui.available_width()),
+                    )
+                    .on_hover_text(tidy(&shared.path))
+                    .clicked()
             {
                 acts.push(Act::RevealPath(shared.path.clone()));
             }
             if slot.managed {
-                ui.separator();
-                let text = egui::RichText::new("Uninstall").font(legend_font(13.5)).color(FAULT);
                 if ui
-                    .button(text)
+                    .add(Key::new("Uninstall").outline(FAULT).min_width(ui.available_width()))
                     .on_hover_text(format!("delete {}", tidy(&install::home(tool))))
                     .clicked()
                 {
