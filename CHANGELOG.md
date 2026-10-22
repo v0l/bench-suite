@@ -6,6 +6,9 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- foreman, coding agents in git worktrees with an issue tracker, installs and updates from the suite.
+
 ## [0.4.3] - 2026-10-19
 
 ### Fixed

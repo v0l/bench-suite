@@ -14,6 +14,7 @@ releases, keeps it up to date, and starts it.
 | [thermview](https://github.com/v0l/thermview) | Radiometric thermal images from InfiRay, Hikmicro, DJI and FLIR |
 | [Cycler](https://github.com/v0l/cycler) | Cell-level battery cycle testing |
 | [Battery Control](https://github.com/v0l/battery-control) | Monitor and control BMSes and power stations over Bluetooth or serial |
+| [foreman](https://github.com/v0l/foreman) | Coding agents in your git projects, with an issue tracker beside them |
 
 Every tool keeps its own repo, version and release. The suite only reads them.
 

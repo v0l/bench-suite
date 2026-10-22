@@ -175,7 +175,7 @@ fn waveshark(tool: &Tool, target: Target, tag: &str) -> Option<Package> {
     Some(Package { name, archive })
 }
 
-pub const TOOLS: [Tool; 9] = [
+pub const TOOLS: [Tool; 10] = [
     Tool {
         name: "gcad",
         title: "gcad",
@@ -447,6 +447,31 @@ pub const TOOLS: [Tool; 9] = [
         skill: None,
         asset: tagged,
     },
+    Tool {
+        name: "foreman",
+        title: "foreman",
+        tagline: "Coding agents in your git projects",
+        blurb: "Run coding agents in git worktrees and keep an issue tracker beside them, \
+                from one window on desktop, web or Android.",
+        guide: crate::guides::FOREMAN,
+        features: &[
+            "Chats with coding agents, each pinned to its own git worktree",
+            "Agents made on an issue start in a fresh worktree named after it",
+            "An issue tracker per project, kept in one SQLite file",
+            "Attach pictures, sound and video to a message",
+            "Works with a server on another machine, and with any installed font",
+        ],
+        cli: &[],
+        cli_bin: "",
+        group: Group::Design,
+        repo: "v0l/foreman",
+        bin: "foreman",
+        verb: &[],
+        opens: Opens::Nothing,
+        version_flag: true,
+        skill: None,
+        asset: tagged,
+    },
 ];
 
 pub const SUITE: Tool = Tool {
@@ -533,6 +558,10 @@ mod tests {
         assert_eq!(
             name("battery-control", Target::LinuxX64, "v0.2.0"),
             "battery-control-x86_64-unknown-linux-gnu.tar.gz"
+        );
+        assert_eq!(
+            name("foreman", Target::WindowsX64, "v0.1.0"),
+            "foreman-v0.1.0-x86_64-pc-windows-msvc.zip"
         );
         assert_eq!(
             name("printfarm", Target::MacArm64, "v0.1.0"),

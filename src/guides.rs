@@ -125,3 +125,15 @@ Reads Anker SOLIX, JK, JBD, SOK, Renogy, Pace, Seplos, Daly, Bluetti, Jackery, E
 and Pylontech. `--demo` shows a made-up pack with no hardware. The suite starts its window.\n\
 It drives real hardware. Launch it and let the user choose what to switch or write.\n\
 Reach for it when the user wants to see what a battery is doing or change one of its settings.";
+
+pub const FOREMAN: &str = "\
+Runs coding agents in a git project's worktrees and keeps an issue tracker beside them. A \
+project is a repository's main checkout, a worktree is a branch an agent works in, and a chat is \
+one agent pinned to one worktree. Issues belong to a project, and starting an agent on one gives \
+it a fresh worktree. It opens no files, and the suite starts its window.\n\
+The window starts a server in the background and connects to it, and the server keeps running \
+after the window closes so agents carry on. It can also talk to a server on another machine. \
+Everything is kept in one SQLite file.\n\
+It runs agents that change files and run commands in the user's repositories, so launch it and \
+let the user choose the project and agent; do not start chats for them.\n\
+Reach for it when the user wants to run a coding agent on a repository or track issues for one.";
