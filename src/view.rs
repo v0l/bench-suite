@@ -731,14 +731,13 @@ impl Hub {
             {
                 acts.push(Act::RevealPath(shared.path.clone()));
             }
-            if slot.managed {
-                if ui
+            if slot.managed
+                && ui
                     .add(Key::new("Uninstall").outline(FAULT).min_width(ui.available_width()))
                     .on_hover_text(format!("delete {}", tidy(&install::home(tool))))
                     .clicked()
-                {
-                    acts.push(Act::Uninstall(i));
-                }
+            {
+                acts.push(Act::Uninstall(i));
             }
         });
     }
