@@ -151,3 +151,17 @@ It moves real money. Launch it and let the user build, check, sign and broadcast
 address or amount for them, and never broadcast. `--devices` lists plugged in signers.\n\
 Reach for it when the user wants to see a hardware wallet's balance or history, receive to it, or \
 pay from it.";
+
+pub const NGRIND: &str = "\
+Mines vanity npubs and NIP-13 proof of work events for Nostr, on the GPU or the CPU. Backends are \
+cuda (NVIDIA, by a wide margin the fastest), wgpu (any GPU with Vulkan, Metal or DirectX 12) and \
+cpu, and by default it picks the best one present.\n\
+A vanity search walks the curve from a random point looking for an npub with a given prefix or \
+suffix (or a hex key), and prints each key it finds. A proof of work run grinds the nonce of a \
+Nostr event until its id has the difficulty asked for.\n\
+Launching it opens a window with the backend toggle, the speed and the chance of a hit so far. The \
+agent can run only `ngrind devices`, which lists the backends and GPUs. `vanity` prints secret \
+keys and `pow` takes an nsec, so those are not open to this chat: launch the window for the \
+user, or tell them the command to run themselves, for example `ngrind vanity --prefix alice \
+--count 3` or `ngrind pow --file note.json --difficulty 28 --nsec nsec1...`.\n\
+Reach for it when the user wants a vanity npub or a Nostr note with proof of work.";

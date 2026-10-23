@@ -16,6 +16,7 @@ releases, keeps it up to date, and starts it.
 | [Battery Control](https://github.com/v0l/battery-control) | Monitor and control BMSes and power stations over Bluetooth or serial |
 | [foreman](https://github.com/v0l/foreman) | Coding agents in your git projects, with an issue tracker beside them |
 | [coldbench](https://github.com/v0l/coldbench) | Bitcoin wallet for Jade, Coldcard and Trezor, laid out like Sparrow |
+| [ngrind](https://github.com/v0l/ngrind) | Vanity npubs and NIP-13 proof of work on the GPU or CPU |
 
 Every tool keeps its own repo, version and release. The suite only reads them.
 

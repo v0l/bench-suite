@@ -83,16 +83,21 @@ pub enum Group {
     Design,
     Radio,
     Measure,
+    Develop,
+    Keys,
 }
 
 impl Group {
-    pub const ALL: [Group; 3] = [Group::Design, Group::Radio, Group::Measure];
+    pub const ALL: [Group; 5] =
+        [Group::Design, Group::Radio, Group::Measure, Group::Develop, Group::Keys];
 
     pub fn label(self) -> &'static str {
         match self {
             Group::Design => "design",
             Group::Radio => "radio",
             Group::Measure => "measurement",
+            Group::Develop => "development",
+            Group::Keys => "keys",
         }
     }
 }
@@ -175,7 +180,7 @@ fn waveshark(tool: &Tool, target: Target, tag: &str) -> Option<Package> {
     Some(Package { name, archive })
 }
 
-pub const TOOLS: [Tool; 11] = [
+pub const TOOLS: [Tool; 12] = [
     Tool {
         name: "gcad",
         title: "gcad",
@@ -463,7 +468,7 @@ pub const TOOLS: [Tool; 11] = [
         ],
         cli: &[],
         cli_bin: "",
-        group: Group::Design,
+        group: Group::Develop,
         repo: "v0l/foreman",
         bin: "foreman",
         verb: &[],
@@ -490,12 +495,38 @@ pub const TOOLS: [Tool; 11] = [
         ],
         cli: &[],
         cli_bin: "",
-        group: Group::Measure,
+        group: Group::Keys,
         repo: "v0l/coldbench",
         bin: "coldbench",
         verb: &[],
         opens: Opens::Files(&[".psbt"]),
         version_flag: true,
+        skill: None,
+        asset: unversioned,
+    },
+    Tool {
+        name: "ngrind",
+        title: "ngrind",
+        tagline: "Vanity npubs and proof of work, on the GPU",
+        blurb: "Mine vanity npubs and NIP-13 proof of work events on an NVIDIA or any Vulkan, \
+                Metal or DirectX 12 GPU, or on the CPU.",
+        guide: crate::guides::NGRIND,
+        features: &[
+            "Mines vanity npubs by prefix or suffix, or hex keys",
+            "Mines NIP-13 proof of work for a Nostr event, to a difficulty you choose",
+            "CUDA on NVIDIA, wgpu on any GPU with Vulkan, Metal or DirectX 12, and the CPU",
+            "Picks the fastest backend itself, and switches backend mid-run in the window",
+            "Shows the speed and the chance of a hit so far",
+            "A command line for scripts, with resumable searches on CUDA",
+        ],
+        cli: &["devices"],
+        cli_bin: "ngrind",
+        group: Group::Keys,
+        repo: "v0l/ngrind",
+        bin: "ngrind-ui",
+        verb: &[],
+        opens: Opens::Nothing,
+        version_flag: false,
         skill: None,
         asset: unversioned,
     },

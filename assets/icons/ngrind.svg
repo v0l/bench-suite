@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="t d">
+  <title id="t">ngrind</title>
+  <desc id="d">A GPU chip with pins on every side, a key in amber on its die.</desc>
+  <rect width="64" height="64" rx="14" fill="#0B1014"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="14" y="14" width="36" height="36" rx="5" stroke="#2FD3E1" stroke-width="3"/>
+    <path d="M23 8v6M32 8v6M41 8v6M23 50v6M32 50v6M41 50v6M8 23h6M8 32h6M8 41h6M50 23h6M50 32h6M50 41h6" stroke="#2FD3E1" stroke-width="2.6" opacity=".6"/>
+    <circle cx="26" cy="32" r="5" stroke="#FFB020" stroke-width="2.8"/>
+    <path d="M31 32h12M39 32v5M43 32v4" stroke="#FFB020" stroke-width="2.8"/>
+  </g>
+</svg>

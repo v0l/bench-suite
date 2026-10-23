@@ -6,6 +6,14 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-23
+
+### Added
+- ngrind, a miner for vanity npubs and NIP-13 proof of work on the GPU or CPU. The agent can list its devices and is told how to run the rest.
+
+### Changed
+- Two new groups: development, which now holds foreman, and keys, which holds coldbench and ngrind.
+
 ## [0.6.0] - 2026-10-23
 
 ### Added
