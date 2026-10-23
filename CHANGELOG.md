@@ -6,6 +6,11 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-23
+
+### Changed
+- foreman has its own icon, a face in a hard hat.
+
 ## [0.5.0] - 2026-10-23
 
 ### Added
