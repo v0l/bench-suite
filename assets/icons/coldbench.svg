@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="t d">
-  <title id="t">wallet</title>
+  <title id="t">coldbench</title>
   <desc id="d">A hardware signer with a screen and two buttons, a bitcoin mark on the screen.</desc>
   <rect width="64" height="64" rx="14" fill="#0B1014"/>
   <g fill="none" stroke-linecap="round" stroke-linejoin="round">

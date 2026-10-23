@@ -138,7 +138,7 @@ It runs agents that change files and run commands in the user's repositories, so
 let the user choose the project and agent; do not start chats for them.\n\
 Reach for it when the user wants to run a coding agent on a repository or track issues for one.";
 
-pub const WALLET: &str = "\
+pub const COLDBENCH: &str = "\
 A watch-only Bitcoin wallet for hardware signers: Blockstream Jade, Coldcard and Trezor. It keeps \
 only public keys; every payment is built here and checked and signed on the device. Pages follow \
 Sparrow's: transactions, send, receive, addresses, UTXOs and settings.\n\

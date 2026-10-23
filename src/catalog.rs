@@ -473,12 +473,12 @@ pub const TOOLS: [Tool; 11] = [
         asset: tagged,
     },
     Tool {
-        name: "wallet",
-        title: "wallet",
+        name: "coldbench",
+        title: "coldbench",
         tagline: "Bitcoin wallet for hardware signers",
         blurb: "A watch-only wallet for Jade, Coldcard and Trezor with Sparrow's pages, \
                 where every payment is checked and signed on the device.",
-        guide: crate::guides::WALLET,
+        guide: crate::guides::COLDBENCH,
         features: &[
             "Transactions, send, receive, addresses, UTXOs and settings, laid out like Sparrow",
             "Talks to Jade, Coldcard and Trezor directly, and says when the device wants its PIN",
@@ -490,8 +490,8 @@ pub const TOOLS: [Tool; 11] = [
         cli: &[],
         cli_bin: "",
         group: Group::Measure,
-        repo: "v0l/wallet",
-        bin: "wallet",
+        repo: "v0l/coldbench",
+        bin: "coldbench",
         verb: &[],
         opens: Opens::Files(&[".psbt"]),
         version_flag: true,
@@ -590,8 +590,8 @@ mod tests {
             "foreman-v0.1.0-x86_64-pc-windows-msvc.zip"
         );
         assert_eq!(
-            name("wallet", Target::LinuxX64, "v0.1.0"),
-            "wallet-x86_64-unknown-linux-gnu.tar.gz"
+            name("coldbench", Target::LinuxX64, "v0.1.0"),
+            "coldbench-x86_64-unknown-linux-gnu.tar.gz"
         );
         assert_eq!(
             name("printfarm", Target::MacArm64, "v0.1.0"),
@@ -626,7 +626,7 @@ mod tests {
         assert_eq!(routed("bracket.gasm"), Some("gcad"));
         assert_eq!(routed("main.PCB.toml"), Some("agentee"));
         assert_eq!(routed("IR_0001.JPG"), Some("thermview"));
-        assert_eq!(routed("payment.psbt"), Some("wallet"));
+        assert_eq!(routed("payment.psbt"), Some("coldbench"));
         assert_eq!(routed("case-left.gcode"), Some("printfarm"));
         assert_eq!(routed("dm1701.rdt"), Some("radio_tool"));
         assert_eq!(routed("notes.txt"), None);
