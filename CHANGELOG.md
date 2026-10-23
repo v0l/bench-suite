@@ -6,6 +6,9 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- Built on egui_bench 0.5.5. Web addresses typed as plain text in a README or changelog are now links, and inline code, list numbers and bullets sit on the same baseline as the text beside them.
+
 ## [0.7.0] - 2026-10-23
 
 ### Added
