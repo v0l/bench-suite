@@ -175,7 +175,7 @@ fn waveshark(tool: &Tool, target: Target, tag: &str) -> Option<Package> {
     Some(Package { name, archive })
 }
 
-pub const TOOLS: [Tool; 10] = [
+pub const TOOLS: [Tool; 11] = [
     Tool {
         name: "gcad",
         title: "gcad",
@@ -472,6 +472,32 @@ pub const TOOLS: [Tool; 10] = [
         skill: None,
         asset: tagged,
     },
+    Tool {
+        name: "wallet",
+        title: "wallet",
+        tagline: "Bitcoin wallet for hardware signers",
+        blurb: "A watch-only wallet for Jade, Coldcard and Trezor with Sparrow's pages, \
+                where every payment is checked and signed on the device.",
+        guide: crate::guides::WALLET,
+        features: &[
+            "Transactions, send, receive, addresses, UTXOs and settings, laid out like Sparrow",
+            "Talks to Jade, Coldcard and Trezor directly, and says when the device wants its PIN",
+            "Coin control, freezing, labels, send all, fee picks and fee bumps",
+            "Signs on the device, or saves and loads PSBTs for an SD card or another signer",
+            "Shows an address on the device to check it, and signs or verifies messages",
+            "Syncs from mempool.space or your own Esplora server",
+        ],
+        cli: &[],
+        cli_bin: "",
+        group: Group::Measure,
+        repo: "v0l/wallet",
+        bin: "wallet",
+        verb: &[],
+        opens: Opens::Files(&[".psbt"]),
+        version_flag: true,
+        skill: None,
+        asset: unversioned,
+    },
 ];
 
 pub const SUITE: Tool = Tool {
@@ -564,6 +590,10 @@ mod tests {
             "foreman-v0.1.0-x86_64-pc-windows-msvc.zip"
         );
         assert_eq!(
+            name("wallet", Target::LinuxX64, "v0.1.0"),
+            "wallet-x86_64-unknown-linux-gnu.tar.gz"
+        );
+        assert_eq!(
             name("printfarm", Target::MacArm64, "v0.1.0"),
             "printfarm-aarch64-apple-darwin.tar.gz"
         );
@@ -596,6 +626,7 @@ mod tests {
         assert_eq!(routed("bracket.gasm"), Some("gcad"));
         assert_eq!(routed("main.PCB.toml"), Some("agentee"));
         assert_eq!(routed("IR_0001.JPG"), Some("thermview"));
+        assert_eq!(routed("payment.psbt"), Some("wallet"));
         assert_eq!(routed("case-left.gcode"), Some("printfarm"));
         assert_eq!(routed("dm1701.rdt"), Some("radio_tool"));
         assert_eq!(routed("notes.txt"), None);

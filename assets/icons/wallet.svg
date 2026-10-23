@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="t d">
+  <title id="t">wallet</title>
+  <desc id="d">A hardware signer with a screen and two buttons, a bitcoin mark on the screen.</desc>
+  <rect width="64" height="64" rx="14" fill="#0B1014"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="17" y="8" width="30" height="48" rx="5" stroke="#2FD3E1" stroke-width="3"/>
+    <rect x="22" y="14" width="20" height="20" rx="2" stroke="#2FD3E1" stroke-width="2.4" opacity=".75"/>
+    <path d="M29 19v10M29 19h4.5a2.5 2.5 0 0 1 0 5H29M29 24h5a2.5 2.5 0 0 1 0 5h-5M31 17v2M31 29v2" stroke="#FFB020" stroke-width="2.2"/>
+    <circle cx="26" cy="45" r="3" stroke="#2FD3E1" stroke-width="2.4" opacity=".5"/>
+    <circle cx="38" cy="45" r="3" stroke="#FFB020" stroke-width="2.4"/>
+  </g>
+</svg>
