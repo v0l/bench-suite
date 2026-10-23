@@ -40,6 +40,7 @@ pub fn icon(tool: &Tool) -> ImageSource<'static> {
         "cycler" => egui::include_image!("../assets/icons/cycler.svg"),
         "waveshark" => egui::include_image!("../assets/icons/waveshark.svg"),
         "radio_tool" => egui::include_image!("../assets/icons/radio_tool.svg"),
+        "foreman" => egui::include_image!("../assets/icons/foreman.svg"),
         _ => egui::include_image!("../assets/icons/bench-suite.svg"),
     }
 }

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="t d">
+  <title id="t">Foreman</title>
+  <desc id="d">A smiling face in an amber hard hat.</desc>
+  <rect width="64" height="64" rx="14" fill="#0B1014"/>
+  <path d="M14 34C14 21 22 13 32 13S50 21 50 34Z" fill="#FFB020"/>
+  <path d="M29 13.3H35V34H29Z" fill="#0B1014" opacity=".28"/>
+  <rect x="8" y="32.5" width="48" height="6" rx="3" fill="#FFB020"/>
+  <g fill="none" stroke="#2FD3E1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 39V42C17 50 24 55 32 55S47 50 47 42V39" stroke-width="3"/>
+    <path d="M27 49C30 52 34 52 37 49" stroke-width="2.4"/>
+  </g>
+  <circle cx="26" cy="44" r="2.4" fill="#2FD3E1"/>
+  <circle cx="38" cy="44" r="2.4" fill="#2FD3E1"/>
+</svg>
