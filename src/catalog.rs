@@ -469,8 +469,7 @@ pub const TOOLS: [Tool; 12] = [
         cli: &[],
         cli_bin: "",
         group: Group::Develop,
-        // The GitHub repo is still called foreman; the releases are named agentbench.
-        repo: "v0l/foreman",
+        repo: "v0l/agentbench",
         bin: "agentbench",
         verb: &[],
         opens: Opens::Nothing,

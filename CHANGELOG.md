@@ -6,6 +6,11 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-10-23
+
+### Changed
+- agentbench installs from its renamed repo, `v0l/agentbench`.
+
 ## [0.7.1] - 2026-10-23
 
 ### Changed
