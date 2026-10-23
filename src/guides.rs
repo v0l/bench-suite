@@ -143,8 +143,10 @@ A watch-only Bitcoin wallet for hardware signers: Blockstream Jade, Coldcard and
 only public keys; every payment is built here and checked and signed on the device. Pages follow \
 Sparrow's: transactions, send, receive, addresses, UTXOs and settings.\n\
 It talks to the devices itself rather than through Python HWI, and says when a device is waiting \
-for its PIN. It syncs from an Esplora server, mempool.space unless the user sets their own. It \
-opens .psbt files to review them or add the signatures in them.\n\
+for its PIN. It syncs by spreading the wallet's addresses over many public Esplora and Electrum \
+servers so no one server sees them all, or from the user's own servers. It can build Stonewall \
+spends for privacy and draws each transaction as a flow of coins. It opens .psbt files to review \
+them or add the signatures in them.\n\
 It moves real money. Launch it and let the user build, check, sign and broadcast; never fill in an \
 address or amount for them, and never broadcast. `--devices` lists plugged in signers.\n\
 Reach for it when the user wants to see a hardware wallet's balance or history, receive to it, or \

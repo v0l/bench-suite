@@ -6,6 +6,11 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-23
+
+### Added
+- coldbench, a watch-only Bitcoin wallet for Jade, Coldcard and Trezor laid out like Sparrow, with Stonewall privacy spends. Its card says when it has no release to install yet. A `.psbt` dropped on the suite opens in it.
+
 ## [0.5.1] - 2026-10-23
 
 ### Changed
