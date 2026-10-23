@@ -40,7 +40,7 @@ pub fn icon(tool: &Tool) -> ImageSource<'static> {
         "cycler" => egui::include_image!("../assets/icons/cycler.svg"),
         "waveshark" => egui::include_image!("../assets/icons/waveshark.svg"),
         "radio_tool" => egui::include_image!("../assets/icons/radio_tool.svg"),
-        "foreman" => egui::include_image!("../assets/icons/foreman.svg"),
+        "agentbench" => egui::include_image!("../assets/icons/agentbench.svg"),
         "ngrind" => egui::include_image!("../assets/icons/ngrind.svg"),
         "coldbench" => egui::include_image!("../assets/icons/coldbench.svg"),
         _ => egui::include_image!("../assets/icons/bench-suite.svg"),

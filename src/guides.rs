@@ -126,7 +126,7 @@ and Pylontech. `--demo` shows a made-up pack with no hardware. The suite starts 
 It drives real hardware. Launch it and let the user choose what to switch or write.\n\
 Reach for it when the user wants to see what a battery is doing or change one of its settings.";
 
-pub const FOREMAN: &str = "\
+pub const AGENTBENCH: &str = "\
 Runs coding agents in a git project's worktrees and keeps an issue tracker beside them. A \
 project is a repository's main checkout, a worktree is a branch an agent works in, and a chat is \
 one agent pinned to one worktree. Issues belong to a project, and starting an agent on one gives \

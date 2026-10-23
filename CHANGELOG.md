@@ -7,6 +7,7 @@ All notable changes to bench suite are listed here. The format follows
 ## [Unreleased]
 
 ### Changed
+- foreman is now agentbench, with its new name on the card, in the README and in the release files the suite looks for (`agentbench-<tag>-<target>`). It still installs from `v0l/foreman` until that repo is renamed, and it only installs from a release made under the new name.
 - Built on egui_bench 0.5.5. Web addresses typed as plain text in a README or changelog are now links, and inline code, list numbers and bullets sit on the same baseline as the text beside them.
 
 ## [0.7.0] - 2026-10-23

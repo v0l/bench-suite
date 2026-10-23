@@ -453,12 +453,12 @@ pub const TOOLS: [Tool; 12] = [
         asset: tagged,
     },
     Tool {
-        name: "foreman",
-        title: "foreman",
+        name: "agentbench",
+        title: "agentbench",
         tagline: "Coding agents in your git projects",
         blurb: "Run coding agents in git worktrees and keep an issue tracker beside them, \
                 from one window on desktop, web or Android.",
-        guide: crate::guides::FOREMAN,
+        guide: crate::guides::AGENTBENCH,
         features: &[
             "Chats with coding agents, each pinned to its own git worktree",
             "Agents made on an issue start in a fresh worktree named after it",
@@ -469,8 +469,9 @@ pub const TOOLS: [Tool; 12] = [
         cli: &[],
         cli_bin: "",
         group: Group::Develop,
+        // The GitHub repo is still called foreman; the releases are named agentbench.
         repo: "v0l/foreman",
-        bin: "foreman",
+        bin: "agentbench",
         verb: &[],
         opens: Opens::Nothing,
         version_flag: true,
@@ -618,8 +619,8 @@ mod tests {
             "battery-control-x86_64-unknown-linux-gnu.tar.gz"
         );
         assert_eq!(
-            name("foreman", Target::WindowsX64, "v0.1.0"),
-            "foreman-v0.1.0-x86_64-pc-windows-msvc.zip"
+            name("agentbench", Target::WindowsX64, "v0.1.0"),
+            "agentbench-v0.1.0-x86_64-pc-windows-msvc.zip"
         );
         assert_eq!(
             name("coldbench", Target::LinuxX64, "v0.1.0"),
