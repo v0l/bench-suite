@@ -36,13 +36,18 @@ A tool that is missing gets an install button, one that is behind gets an
 update button, and the launcher offers to replace itself when a new one is out.
 Downloads are checked against the sha256 GitHub publishes for them.
 
-Tools the suite installs live in its data folder
-(`~/.local/share/bench-suite/tools` on Linux,
-`~/Library/Application Support/bench-suite/tools` on macOS,
-`%LOCALAPPDATA%\bench-suite\tools` on Windows). A tool you installed some other
-way, beside the launcher, in a folder listed in `BENCH_SUITE_TOOLS` or on
-`PATH`, is found and launched too, and its version is read with `--version`
-where the tool has one.
+Tools are installed with the platform's own installer, the same as if you had downloaded it:
+the `.msi` on Windows, the `.dmg` on macOS (into `/Applications`, or `~/Applications`), and the
+`.deb` or `.rpm` on Linux, run through `apt-get`, `dnf`, `zypper`, `dpkg` or `rpm` with `pkexec`
+asking for your password. They appear in Start search, Spotlight and the application menu, and
+keep working if the suite is removed. Uninstall runs the matching uninstall.
+
+A tool that publishes no installer for your machine (and any Linux machine without `pkexec` or a
+package manager) is unpacked into the suite's data folder instead
+(`~/.local/share/bench-suite/tools`, `~/Library/Application Support/bench-suite/tools` or
+`%LOCALAPPDATA%\bench-suite\tools`) and given a desktop entry or Start Menu shortcut. A tool you
+installed some other way, beside the launcher, in a folder listed in `BENCH_SUITE_TOOLS` or on
+`PATH`, is found and launched too, and its version is read with `--version` where the tool has one.
 
 ## Agent chat
 

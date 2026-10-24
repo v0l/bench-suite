@@ -1,6 +1,7 @@
 use crate::catalog::{
     Archive, Package, Target, Tool, VERSIONS_FILE, read_versions, write_versions,
 };
+use crate::system;
 use egui_bench::update::{find_file, replace, unpack};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -37,7 +38,74 @@ fn record(tool: &Tool, version: &str) -> Result<(), String> {
     fs::write(root().join(VERSIONS_FILE), write_versions(&all)).map_err(|e| e.to_string())
 }
 
+/// Where the Windows installers are kept, so `msiexec /x` can remove what they installed.
+fn kept(tool: &Tool) -> PathBuf {
+    root().parent().unwrap_or(&root()).join("installers").join(format!("{}.msi", tool.name))
+}
+
+/// The copy of `tool` that a system installer put on this machine.
+pub fn installed(tool: &Tool) -> Option<PathBuf> {
+    crate::catalog::locate(&system::places(tool), tool.bin).filter(|p| system::is_installed_app(p))
+}
+
+/// A copy the suite unpacked into its own folder, as earlier versions and tools without an
+/// installer do.
+pub fn portable(tool: &Tool) -> Option<PathBuf> {
+    crate::catalog::locate(&[home(tool)], tool.bin).filter(|p| p.starts_with(root()))
+}
+
 pub fn place(
+    tool: &Tool,
+    target: Target,
+    package: &Package,
+    version: &str,
+    file: &Path,
+) -> Result<(), String> {
+    match package.archive {
+        Archive::Msi => {
+            let msi = kept(tool);
+            fs::create_dir_all(msi.parent().ok_or("no folder")?).map_err(|e| e.to_string())?;
+            fs::copy(file, &msi).map_err(|e| format!("{}: {e}", msi.display()))?;
+            system::msi_install(&msi)?;
+        }
+        Archive::Deb | Archive::Rpm => system::package_install(package.archive, file)?,
+        Archive::Dmg => place_dmg(tool, package, file)?,
+        Archive::Bare | Archive::TarGz | Archive::Zip => {
+            return place_portable(tool, target, package, version, file);
+        }
+    }
+    // a proper install replaces whatever the suite kept in its own folder before
+    let _ = crate::launcher::unregister(tool);
+    let _ = fs::remove_dir_all(home(tool));
+    record(tool, version)?;
+    let exe = installed(tool)
+        .ok_or_else(|| format!("{} was installed but could not be found afterwards", tool.title))?;
+    crate::skills::install(tool, &exe, version)?;
+    Ok(())
+}
+
+fn place_dmg(tool: &Tool, package: &Package, file: &Path) -> Result<(), String> {
+    let staging = root().join(format!(".{}.unpack", tool.name));
+    let _ = fs::remove_dir_all(&staging);
+    let placed = unpack(file, &staging).and_then(|()| {
+        let apps: Vec<PathBuf> = fs::read_dir(&staging)
+            .map_err(|e| e.to_string())?
+            .flatten()
+            .map(|e| e.path())
+            .filter(|p| p.extension().is_some_and(|e| e == "app"))
+            .collect();
+        if apps.is_empty() {
+            return Err(format!("no .app in {}", package.name));
+        }
+        system::app_install(&apps, &system::mac_folders())
+    });
+    let _ = fs::remove_dir_all(&staging);
+    placed
+}
+
+/// For a tool with no installer for this machine: unpack it into the suite's own folder and give
+/// it a menu entry.
+fn place_portable(
     tool: &Tool,
     target: Target,
     package: &Package,
@@ -49,7 +117,7 @@ pub fn place(
     let _ = fs::remove_dir_all(&staging);
     let placed = unpack(file, &staging).and_then(|()| match package.archive {
         Archive::Bare => replace(&staging.join(&package.name), &into.join(target.exe(tool.bin))),
-        Archive::TarGz | Archive::Zip => {
+        _ => {
             let exe = target.exe(tool.bin);
             let main = find_file(&staging, &exe)
                 .ok_or_else(|| format!("{exe} is not in {}", package.name))?;
@@ -59,33 +127,51 @@ pub fn place(
             }
             Ok(())
         }
-        Archive::Dmg => {
-            let apps: Vec<PathBuf> = fs::read_dir(&staging)
-                .map_err(|e| e.to_string())?
-                .flatten()
-                .map(|e| e.path())
-                .filter(|p| p.extension().is_some_and(|e| e == "app"))
-                .collect();
-            if apps.is_empty() {
-                return Err(format!("no .app in {}", package.name));
-            }
-            for app in apps {
-                replace(&app, &into.join(app.file_name().ok_or("unnamed .app")?))?;
-            }
-            Ok(())
-        }
     });
     let _ = fs::remove_dir_all(&staging);
     placed?;
     record(tool, version)?;
     if let Some(exe) = crate::catalog::locate(&[into], tool.bin) {
+        crate::launcher::register(tool, &exe)?;
         crate::skills::install(tool, &exe, version)?;
     }
     Ok(())
 }
 
+/// What uninstalling `tool` will do, for the confirmation.
+pub fn removal(tool: &Tool) -> String {
+    if installed(tool).is_some() {
+        let how = if cfg!(windows) {
+            "runs its uninstaller"
+        } else if cfg!(target_os = "macos") {
+            "deletes its app"
+        } else {
+            "removes its package"
+        };
+        format!(
+            "This {how}. Your own files are not touched, and you can install it again from here."
+        )
+    } else {
+        format!(
+            "This deletes {}. Your own files are not touched, and you can install it again from here.",
+            home(tool).display()
+        )
+    }
+}
+
 pub fn remove(tool: &Tool) -> Result<(), String> {
+    if let Some(exe) = installed(tool) {
+        if cfg!(windows) {
+            system::msi_remove(&kept(tool))?;
+            let _ = fs::remove_file(kept(tool));
+        } else if cfg!(target_os = "macos") {
+            system::app_remove(&exe)?;
+        } else {
+            system::package_remove(&exe)?;
+        }
+    }
     crate::skills::remove(tool)?;
+    crate::launcher::unregister(tool)?;
     let _held = VERSIONS_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let dir = home(tool);
     if dir.exists() {

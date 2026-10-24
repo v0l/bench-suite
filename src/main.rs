@@ -6,8 +6,10 @@ mod catalog;
 mod docs;
 mod guides;
 mod install;
+mod launcher;
 mod page;
 mod skills;
+mod system;
 mod view;
 
 fn main() -> eframe::Result<()> {

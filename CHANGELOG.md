@@ -6,6 +6,11 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- Tools are now installed with the platform's own installer, as if you had opened it yourself: the `.msi` on Windows (through `msiexec`), the `.dmg` on macOS (the app goes into `/Applications`, or `~/Applications` if that is not writable), and the `.deb` or `.rpm` on Linux (through `apt-get`, `dnf`, `zypper`, `dpkg` or `rpm`, with `pkexec` asking for permission). They show up in Start search, Spotlight and the application menu, and no longer depend on the suite. Uninstalling runs the matching uninstall.
+- Tools that publish no installer for the machine (agentee and coldbench, and any Linux machine without `pkexec` or a package manager) are still unpacked into the suite's folder, now with a desktop entry on Linux or a Start Menu shortcut on Windows.
+- A tool installed earlier into the suite's folder is replaced by the proper install the next time it is installed or updated.
+
 ## [0.7.2] - 2026-10-23
 
 ### Changed

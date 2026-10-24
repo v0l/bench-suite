@@ -274,10 +274,9 @@ impl Hub {
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let target = self.target.map(Target::label).unwrap_or("no published build");
-                Line::new()
-                    .note(format!("installing for {target}"))
-                    .show(ui)
-                    .on_hover_text(format!("tools are kept in {}", tidy(&install::root())));
+                Line::new().note(format!("installing for {target}")).show(ui).on_hover_text(
+                    "tools are installed with the system's own installer where they publish one",
+                );
             });
         });
     }
@@ -507,7 +506,7 @@ impl Hub {
                     format!("download and install {}", r.version)
                 } else {
                     format!(
-                        "install {} into the suite's own folder, used from then on instead of the copy it found",
+                        "install {} the usual way, used from then on instead of the copy it found",
                         r.version
                     )
                 };
@@ -737,7 +736,7 @@ impl Hub {
             if slot.managed
                 && ui
                     .add(Key::new("Uninstall").outline(FAULT).min_width(ui.available_width()))
-                    .on_hover_text(format!("delete {}", tidy(&install::home(tool))))
+                    .on_hover_text("remove it from this machine")
                     .clicked()
             {
                 acts.push(Act::Uninstall(i));
@@ -794,26 +793,19 @@ impl Hub {
         let modal = egui::Modal::new(Id::new("remove"))
             .backdrop_color(egui::Color32::from_black_alpha(150))
             .show(ctx, |ui| {
-            ui.set_width(380.0);
-            modal_title(ui, &format!("Uninstall {}?", tool.title));
-            note(
-                ui,
-                format!(
-                    "This deletes {}. Your own files are not touched, and you can install it again from here.",
-                    tidy(&install::home(tool))
-                ),
-                LEGEND,
-            );
-            footer(ui, |ui| {
-                if ui.add(Key::new("uninstall").solid(FAULT).min_width(120.0)).clicked() {
-                    acts.push(Act::Remove(i));
-                    self.removing = None;
-                }
-                if ui.add(Key::new("keep it").outline(VALUE).min_width(120.0)).clicked() {
-                    self.removing = None;
-                }
+                ui.set_width(380.0);
+                modal_title(ui, &format!("Uninstall {}?", tool.title));
+                note(ui, install::removal(tool), LEGEND);
+                footer(ui, |ui| {
+                    if ui.add(Key::new("uninstall").solid(FAULT).min_width(120.0)).clicked() {
+                        acts.push(Act::Remove(i));
+                        self.removing = None;
+                    }
+                    if ui.add(Key::new("keep it").outline(VALUE).min_width(120.0)).clicked() {
+                        self.removing = None;
+                    }
+                });
             });
-        });
         if modal.should_close() {
             self.removing = None;
         }

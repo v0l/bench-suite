@@ -1,6 +1,6 @@
 use crate::catalog::{SUITE, TOOLS, Target, Tool, for_path, locate};
-use crate::install;
 use crate::skills::{self, Placed};
+use crate::{install, launcher};
 use egui_bench::prelude::Browser;
 use egui_bench::update::{self, Install, Release, State, Updater};
 use std::path::{Path, PathBuf};
@@ -41,10 +41,24 @@ impl Slot {
     }
 
     pub fn installable(&self, target: Option<Target>) -> Option<(Release, update::Asset)> {
-        let release = self.offer()?;
-        let package = self.tool.package(target?, &release.tag)?;
-        let asset = release.asset(&package.name)?.clone();
+        let (release, _, asset) = self.choice(target)?;
         Some((release, asset))
+    }
+
+    /// The release's best build for this machine: the platform's own installer when it has one,
+    /// otherwise a plain archive.
+    pub fn choice(
+        &self,
+        target: Option<Target>,
+    ) -> Option<(Release, crate::catalog::Package, update::Asset)> {
+        let release = self.offer()?;
+        let target = target?;
+        let (package, asset) = self
+            .tool
+            .packages(target, &release.tag)
+            .into_iter()
+            .find_map(|p| release.asset(&p.name).cloned().map(|a| (p, a)))?;
+        Some((release, package, asset))
     }
 }
 
@@ -198,10 +212,7 @@ impl Hub {
         let target = self.target.ok_or("no builds are published for this machine")?;
         let slot = &mut self.slots[i];
         let tool = slot.tool;
-        let Some((release, asset)) = slot.installable(Some(target)) else {
-            return Err(format!("{} has no build to install for this machine", tool.title));
-        };
-        let Some(package) = tool.package(target, &release.tag) else {
+        let Some((release, package, asset)) = slot.choice(Some(target)) else {
             return Err(format!("{} has no build to install for this machine", tool.title));
         };
         slot.settled = false;
@@ -435,26 +446,37 @@ impl Hub {
 
 fn relocate(slot: &mut Slot, versions: &[(String, String)], ctx: &egui::Context) {
     let tool = slot.tool;
-    let managed =
-        locate(&[install::home(tool)], tool.bin).filter(|p| p.starts_with(install::root()));
+    // what the suite put there: a system install, or a copy in its own folder
+    let managed = install::installed(tool).or_else(|| install::portable(tool));
     slot.managed = managed.is_some();
     slot.exe = managed.or_else(|| locate(&search_dirs(), tool.bin));
     slot.skills = Ok(Vec::new());
+    let recorded = versions.iter().find(|(n, _)| n == tool.name).map(|(_, v)| v.clone());
     if slot.managed {
-        let v = versions.iter().find(|(n, _)| n == tool.name).map(|(_, v)| v.clone());
-        if let (Some(exe), Some(version)) = (&slot.exe, &v) {
+        if let (Some(exe), Some(version)) = (&slot.exe, &recorded) {
             slot.skills = sync_skill(tool, exe, version);
         }
-        slot.updater.set_current(v);
-    } else if let Some(exe) = slot.exe.clone().filter(|_| tool.version_flag) {
-        let updater = slot.updater.clone();
-        let ctx = ctx.clone();
-        std::thread::spawn(move || {
-            updater.set_current(update::probe_version(&exe));
-            ctx.request_repaint();
-        });
-    } else {
-        slot.updater.set_current(None);
+        if let Some(exe) = install::portable(tool) {
+            // copies kept in the suite's folder get a menu entry too
+            std::thread::spawn(move || {
+                if let Err(e) = launcher::ensure(tool, &exe) {
+                    eprintln!("{}: {e}", tool.name);
+                }
+            });
+        }
+    }
+    match (&slot.exe, recorded) {
+        (Some(_), Some(v)) if slot.managed => slot.updater.set_current(Some(v)),
+        (Some(exe), _) if tool.version_flag => {
+            let exe = exe.clone();
+            let updater = slot.updater.clone();
+            let ctx = ctx.clone();
+            std::thread::spawn(move || {
+                updater.set_current(update::probe_version(&exe));
+                ctx.request_repaint();
+            });
+        }
+        _ => slot.updater.set_current(None),
     }
 }
 

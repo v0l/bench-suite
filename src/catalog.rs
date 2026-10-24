@@ -52,8 +52,36 @@ impl Target {
         if self.is_windows() { format!("{bin}.exe") } else { bin.to_string() }
     }
 
-    fn archive(self) -> (&'static str, Archive) {
-        if self.is_windows() { ("zip", Archive::Zip) } else { ("tar.gz", Archive::TarGz) }
+    /// The proper installers this machine can run, best first: an MSI on Windows, a `.dmg` on
+    /// macOS, and a `.deb` or `.rpm` on Linux when the package manager and polkit are there.
+    pub fn installers(self) -> Vec<Archive> {
+        match self {
+            Target::WindowsX64 => vec![Archive::Msi],
+            Target::MacArm64 | Target::MacX64 => vec![Archive::Dmg],
+            Target::LinuxX64 | Target::LinuxArm64 => {
+                crate::system::linux_format().into_iter().collect()
+            }
+        }
+    }
+
+    /// Plain archives, used for a tool that publishes no installer for this machine.
+    fn portable(self) -> &'static [Archive] {
+        match self {
+            Target::WindowsX64 => &[Archive::Zip],
+            Target::MacArm64 | Target::MacX64 => &[Archive::TarGz],
+            Target::LinuxX64 | Target::LinuxArm64 => &[Archive::TarGz, Archive::Bare],
+        }
+    }
+
+    fn accepts(self, archive: Archive) -> bool {
+        match archive {
+            Archive::Msi | Archive::Zip => self.is_windows(),
+            Archive::Dmg => matches!(self, Target::MacArm64 | Target::MacX64),
+            Archive::Deb | Archive::Rpm | Archive::Bare => {
+                matches!(self, Target::LinuxX64 | Target::LinuxArm64)
+            }
+            Archive::TarGz => !self.is_windows(),
+        }
     }
 }
 
@@ -63,6 +91,23 @@ pub enum Archive {
     Zip,
     Bare,
     Dmg,
+    Msi,
+    Deb,
+    Rpm,
+}
+
+impl Archive {
+    fn ext(self) -> Option<&'static str> {
+        match self {
+            Archive::TarGz => Some("tar.gz"),
+            Archive::Zip => Some("zip"),
+            Archive::Dmg => Some("dmg"),
+            Archive::Msi => Some("msi"),
+            Archive::Deb => Some("deb"),
+            Archive::Rpm => Some("rpm"),
+            Archive::Bare => None,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -118,12 +163,31 @@ pub struct Tool {
     pub opens: Opens,
     pub version_flag: bool,
     pub skill: Option<&'static str>,
-    asset: fn(&Tool, Target, &str) -> Option<Package>,
+    asset: fn(&Tool, Target, &str, Archive) -> Option<Package>,
 }
 
 impl Tool {
+    /// The plain archive for a target, which is how the suite itself is replaced.
     pub fn package(&self, target: Target, tag: &str) -> Option<Package> {
-        (self.asset)(self, target, tag)
+        target.portable().iter().find_map(|a| self.named(target, tag, *a))
+    }
+
+    /// Every build of this tool that could be installed on `target`, proper installers first.
+    /// Which of them a release really has is for the caller to check.
+    pub fn packages(&self, target: Target, tag: &str) -> Vec<Package> {
+        let installers = target.installers();
+        installers
+            .iter()
+            .chain(target.portable())
+            .filter_map(|a| self.named(target, tag, *a))
+            .collect()
+    }
+
+    pub fn named(&self, target: Target, tag: &str, archive: Archive) -> Option<Package> {
+        if !target.accepts(archive) {
+            return None;
+        }
+        (self.asset)(self, target, tag, archive)
     }
 
     pub fn suffixes(&self) -> &'static [&'static str] {
@@ -157,25 +221,32 @@ impl Tool {
     }
 }
 
-fn unversioned(tool: &Tool, target: Target, _tag: &str) -> Option<Package> {
-    let (ext, archive) = target.archive();
+fn unversioned(tool: &Tool, target: Target, _tag: &str, archive: Archive) -> Option<Package> {
+    let ext = archive.ext()?;
     Some(Package { name: format!("{}-{}.{ext}", tool.name, target.triple()), archive })
 }
 
-fn tagged(tool: &Tool, target: Target, tag: &str) -> Option<Package> {
-    let (ext, archive) = target.archive();
+fn tagged(tool: &Tool, target: Target, tag: &str, archive: Archive) -> Option<Package> {
+    let ext = archive.ext()?;
     Some(Package { name: format!("{}-{tag}-{}.{ext}", tool.name, target.triple()), archive })
 }
 
-fn waveshark(tool: &Tool, target: Target, tag: &str) -> Option<Package> {
+fn waveshark(tool: &Tool, target: Target, tag: &str, archive: Archive) -> Option<Package> {
+    if archive == Archive::TarGz {
+        return None;
+    }
     let v = tag.trim_start_matches('v');
     let n = tool.name;
-    let (name, archive) = match target {
-        Target::LinuxX64 => (format!("{n}-{v}-linux-x86_64"), Archive::Bare),
-        Target::LinuxArm64 => (format!("{n}-{v}-linux-arm64"), Archive::Bare),
-        Target::MacArm64 => (format!("{n}-{v}-macos-arm64.dmg"), Archive::Dmg),
-        Target::WindowsX64 => (format!("{n}-{v}-windows-x86_64.zip"), Archive::Zip),
+    let platform = match target {
+        Target::LinuxX64 => "linux-x86_64",
+        Target::LinuxArm64 => "linux-arm64",
+        Target::MacArm64 => "macos-arm64",
+        Target::WindowsX64 => "windows-x86_64",
         Target::MacX64 => return None,
+    };
+    let name = match archive.ext() {
+        Some(ext) => format!("{n}-{v}-{platform}.{ext}"),
+        None => format!("{n}-{v}-{platform}"),
     };
     Some(Package { name, archive })
 }
@@ -638,14 +709,38 @@ mod tests {
             SUITE.package(Target::WindowsX64, "v0.1.0").unwrap().name,
             "bench-suite-x86_64-pc-windows-msvc.zip"
         );
+        let named = |tool: &str, target, archive| {
+            tool_named(tool).named(target, "v0.4.0", archive).map(|p| p.name)
+        };
         assert_eq!(
-            name("waveshark", Target::MacArm64, "v0.4.0"),
-            "waveshark-0.4.0-macos-arm64.dmg"
+            named("waveshark", Target::MacArm64, Archive::Dmg).as_deref(),
+            Some("waveshark-0.4.0-macos-arm64.dmg")
         );
         assert_eq!(
-            name("waveshark", Target::WindowsX64, "v0.4.0"),
-            "waveshark-0.4.0-windows-x86_64.zip"
+            named("waveshark", Target::WindowsX64, Archive::Zip).as_deref(),
+            Some("waveshark-0.4.0-windows-x86_64.zip")
         );
+        assert_eq!(
+            named("waveshark", Target::WindowsX64, Archive::Msi).as_deref(),
+            Some("waveshark-0.4.0-windows-x86_64.msi")
+        );
+        assert_eq!(
+            named("waveshark", Target::LinuxArm64, Archive::Rpm).as_deref(),
+            Some("waveshark-0.4.0-linux-arm64.rpm")
+        );
+        assert_eq!(
+            named("cycler", Target::LinuxX64, Archive::Deb).as_deref(),
+            Some("cycler-v0.4.0-x86_64-unknown-linux-gnu.deb")
+        );
+        assert_eq!(
+            named("gcad", Target::WindowsX64, Archive::Msi).as_deref(),
+            Some("gcad-x86_64-pc-windows-msvc.msi")
+        );
+        assert_eq!(
+            named("gcad", Target::MacX64, Archive::Dmg).as_deref(),
+            Some("gcad-x86_64-apple-darwin.dmg")
+        );
+        assert_eq!(named("gcad", Target::LinuxX64, Archive::Msi), None);
     }
 
     fn tool_named(name: &str) -> &'static Tool {
