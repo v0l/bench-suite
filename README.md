@@ -13,6 +13,7 @@ releases, keeps it up to date, and starts it.
 | [radio_tool](https://github.com/v0l/radio_tool) | Firmware and codeplugs for TYT, Baofeng, Radioddity, Yaesu and Ailunce radios |
 | [thermview](https://github.com/v0l/thermview) | Radiometric thermal images from InfiRay, Hikmicro, DJI and FLIR |
 | [Cycler](https://github.com/v0l/cycler) | Cell-level battery cycle testing |
+| [Testbench](https://github.com/v0l/testbench) | Bench supply, electronic load, NanoVNA and USB oscilloscope in one window |
 | [Battery Control](https://github.com/v0l/battery-control) | Monitor and control BMSes and power stations over Bluetooth or serial |
 | [agentbench](https://github.com/v0l/agentbench) | Coding agents in your git projects, with an issue tracker beside them |
 | [coldbench](https://github.com/v0l/coldbench) | Bitcoin wallet for Jade, Coldcard and Trezor, laid out like Sparrow |

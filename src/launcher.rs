@@ -181,6 +181,7 @@ fn icon(name: &str) -> &'static [u8] {
         "thermview" => include_bytes!("../assets/icons/thermview.svg"),
         "battery-control" => include_bytes!("../assets/icons/battery-control.svg"),
         "cycler" => include_bytes!("../assets/icons/cycler.svg"),
+        "testbench" => include_bytes!("../assets/icons/testbench.svg"),
         "waveshark" => include_bytes!("../assets/icons/waveshark.svg"),
         "radio_tool" => include_bytes!("../assets/icons/radio_tool.svg"),
         "agentbench" => include_bytes!("../assets/icons/agentbench.svg"),

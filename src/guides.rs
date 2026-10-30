@@ -115,6 +115,22 @@ It drives real chargers and loads. Launch it and let the user choose the setting
 suggest voltage or current limits for a pack you have not been told about.\n\
 Reach for it when the user wants to charge, discharge or measure the capacity of cells.";
 
+pub const TESTBENCH: &str = "\
+A test and measure bench in one window: a bench power supply, an electronic load, a NanoVNA and \
+a USB oscilloscope. The suite starts its window, the `testbench-ui` binary. It opens no files.\n\
+The supply and load come from the cycler device layer (OWON SPE and OEL, Atorch DL24 and more). \
+The VNA tab sweeps a NanoVNA with open, short and load calibration and plots SWR, return loss \
+and a Smith chart, and exports CSV and .s1p. The scope tab reads a Hantek DSO5102P over its own \
+USB protocol and Rigol, Siglent and Keysight scopes over USBTMC, with measurements, an FFT and \
+CSV export. The Hantek is read only: timebase, volts per division and trigger are set on the \
+scope. The log tab records supply and load samples together.\n\
+`--demo` runs simulated devices. The command line has `devices`, `scope` and `vna` for use \
+without a window; `psu` and `load` switch real outputs and are not open to this chat.\n\
+It drives real instruments. Launch it and let the user choose the settings; never suggest \
+voltage or current limits for a load you have not been told about.\n\
+Reach for it when the user wants to power, load or measure a circuit, sweep an antenna or look \
+at a waveform.";
+
 pub const BATTERY_CONTROL: &str = "\
 Live monitor and control for batteries, BMSes and power stations through one window, whatever \
 the make. It scans Bluetooth and probes USB serial ports, then shows charge, voltage, current, \

@@ -38,6 +38,7 @@ pub fn icon(tool: &Tool) -> ImageSource<'static> {
         "thermview" => egui::include_image!("../assets/icons/thermview.svg"),
         "battery-control" => egui::include_image!("../assets/icons/battery-control.svg"),
         "cycler" => egui::include_image!("../assets/icons/cycler.svg"),
+        "testbench" => egui::include_image!("../assets/icons/testbench.svg"),
         "waveshark" => egui::include_image!("../assets/icons/waveshark.svg"),
         "radio_tool" => egui::include_image!("../assets/icons/radio_tool.svg"),
         "agentbench" => egui::include_image!("../assets/icons/agentbench.svg"),

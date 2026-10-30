@@ -251,7 +251,7 @@ fn waveshark(tool: &Tool, target: Target, tag: &str, archive: Archive) -> Option
     Some(Package { name, archive })
 }
 
-pub const TOOLS: [Tool; 12] = [
+pub const TOOLS: [Tool; 13] = [
     Tool {
         name: "gcad",
         title: "gcad",
@@ -524,6 +524,32 @@ pub const TOOLS: [Tool; 12] = [
         asset: tagged,
     },
     Tool {
+        name: "testbench",
+        title: "Testbench",
+        tagline: "Test and measure bench",
+        blurb: "A bench supply, an electronic load, a NanoVNA and a USB oscilloscope from one \
+                window.",
+        guide: crate::guides::TESTBENCH,
+        features: &[
+            "Sets voltage and current on a bench supply and shows volts, amps, watts and CC or CV",
+            "Drives an electronic load in CC, CV, CR or CP and reads amp-hours and watt-hours",
+            "Sweeps a NanoVNA with SOL calibration, SWR, return loss, a Smith chart and .s1p export",
+            "Reads USB oscilloscopes: Hantek DSO5102P, and Rigol, Siglent and Keysight over USBTMC",
+            "Measurements and an FFT on a capture, with CSV export",
+            "Logs the supply and load together to CSV, and runs on simulated devices with --demo",
+        ],
+        cli: &["devices", "scope", "vna"],
+        cli_bin: "testbench",
+        group: Group::Measure,
+        repo: "v0l/testbench",
+        bin: "testbench-ui",
+        verb: &[],
+        opens: Opens::Nothing,
+        version_flag: false,
+        skill: None,
+        asset: tagged,
+    },
+    Tool {
         name: "agentbench",
         title: "agentbench",
         tagline: "Coding agents in your git projects",
@@ -700,6 +726,10 @@ mod tests {
             name("printfarm", Target::MacArm64, "v0.1.0"),
             "printfarm-aarch64-apple-darwin.tar.gz"
         );
+        assert_eq!(
+            name("testbench", Target::LinuxX64, "v0.1.0"),
+            "testbench-v0.1.0-x86_64-unknown-linux-gnu.tar.gz"
+        );
         assert_eq!(name("waveshark", Target::LinuxX64, "v0.4.0"), "waveshark-0.4.0-linux-x86_64");
         assert_eq!(
             name("radio_tool", Target::WindowsX64, "v0.4.0"),
@@ -712,6 +742,10 @@ mod tests {
         let named = |tool: &str, target, archive| {
             tool_named(tool).named(target, "v0.4.0", archive).map(|p| p.name)
         };
+        assert_eq!(
+            tool_named("testbench").named(Target::LinuxX64, "v0.1.0", Archive::Deb).map(|p| p.name).as_deref(),
+            Some("testbench-v0.1.0-x86_64-unknown-linux-gnu.deb")
+        );
         assert_eq!(
             named("waveshark", Target::MacArm64, Archive::Dmg).as_deref(),
             Some("waveshark-0.4.0-macos-arm64.dmg")
