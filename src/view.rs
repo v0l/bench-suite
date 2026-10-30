@@ -67,9 +67,6 @@ impl eframe::App for Hub {
                 .frame(egui::Frame::NONE.fill(PANEL).inner_margin(egui::Margin::symmetric(20, 8)))
                 .show(ui, |ui| self.suite_banner(ui, &mut acts));
         }
-        egui::Panel::bottom("footer")
-            .frame(egui::Frame::NONE.fill(CHASSIS).inner_margin(egui::Margin::symmetric(20, 6)))
-            .show(ui, |ui| self.footer(ui));
         egui::CentralPanel::no_frame().show(ui, |ui| {
             let r = ui.max_rect();
             ui.painter().rect_filled(r, 0.0, CHASSIS);
@@ -88,6 +85,7 @@ impl eframe::App for Hub {
                     .show(ui, |ui| self.body(ui, &mut acts));
             });
         });
+        self.toast(&ctx);
         self.confirm_removal(&ctx, &mut acts);
         self.apply(&ctx, acts);
         egui_bench::agent::serve(self, &ctx);
@@ -121,13 +119,21 @@ impl Hub {
             self.page_tabs(ui);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let label = if checking { "checking" } else { "check for updates" };
+                let target = self.target.map(Target::label).unwrap_or("no published build");
                 let r = ui
                     .add(Key::new(label).outline(VALUE).enabled(!checking))
-                    .on_hover_text("ask GitHub for the newest release of every tool");
+                    .on_hover_text(format!(
+                        "ask GitHub for the newest release of every tool\ninstalling for {target}"
+                    ));
                 if r.clicked() {
                     acts.push(Act::Check);
                 }
                 ui.add_space(8.0);
+                let (note, tint) = self.header_note();
+                if ui.available_width() > 560.0 {
+                    Line::new().note(note).tint(tint).show(ui);
+                    ui.add_space(8.0);
+                }
                 let room = (ui.available_width() - 16.0).min(240.0);
                 if room < 120.0 || self.agent.open {
                     return;
@@ -229,56 +235,55 @@ impl Hub {
         });
     }
 
-    fn footer(&mut self, ui: &mut Ui) {
-        let r = ui.max_rect();
-        rule(ui, r.left_top() - vec2(20.0, 6.0), r.right_top() + vec2(20.0, -6.0));
-        ui.horizontal(|ui| {
-            match self.status.clone() {
-                Some((msg, fault)) => {
-                    let (tint, dot) = if fault { (FAULT, FAULT) } else { (VALUE, OK) };
-                    dot_ui(ui, dot);
-                    Line::new().note(msg).tint(tint).show(ui);
-                    if ui.add(Key::new("dismiss").outline(VALUE)).clicked() {
-                        self.status = None;
-                    }
-                }
-                None if !self.checking() && self.check_failure().is_some() => {
-                    dot_ui(ui, FAULT);
-                    let e = self.check_failure().unwrap_or_default();
-                    Line::new()
-                        .note(format!("could not check for updates: {e}"))
-                        .tint(FAULT)
-                        .show(ui);
-                }
-                None if self.slots.iter().any(|s| s.updater.install_state().busy()) => {
-                    let names: Vec<&str> = self
-                        .slots
-                        .iter()
-                        .filter(|s| s.updater.install_state().busy())
-                        .map(|s| s.tool.title)
-                        .collect();
-                    dot_ui(ui, READOUT);
-                    Line::new()
-                        .note(format!("installing {}", names.join(", ")))
-                        .tint(VALUE)
-                        .show(ui);
-                }
-                None => {
-                    let text = match (self.checking(), self.checked) {
-                        (true, _) => "asking GitHub for the newest releases".to_string(),
-                        (false, Some(at)) => format!("checked for updates {}", ago(at)),
-                        (false, None) => "not checked for updates yet".to_string(),
-                    };
-                    Line::new().note(text).show(ui);
-                }
-            }
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let target = self.target.map(Target::label).unwrap_or("no published build");
-                Line::new().note(format!("installing for {target}")).show(ui).on_hover_text(
-                    "tools are installed with the system's own installer where they publish one",
-                );
+    fn header_note(&self) -> (String, Color32) {
+        if !self.checking()
+            && let Some(e) = self.check_failure()
+        {
+            return (format!("could not check for updates: {e}"), FAULT);
+        }
+        let installing: Vec<&str> = self
+            .slots
+            .iter()
+            .filter(|s| s.updater.install_state().busy())
+            .map(|s| s.tool.title)
+            .collect();
+        if !installing.is_empty() {
+            return (format!("installing {}", installing.join(", ")), LEGEND);
+        }
+        let text = match (self.checking(), self.checked) {
+            (true, _) => "asking GitHub for the newest releases".to_string(),
+            (false, Some(at)) => format!("checked {}", ago(at)),
+            (false, None) => "not checked yet".to_string(),
+        };
+        (text, LEGEND)
+    }
+
+    fn toast(&mut self, ctx: &egui::Context) {
+        let Some((msg, fault)) = self.status.clone() else {
+            return;
+        };
+        let (tint, dot) = if fault { (FAULT, FAULT) } else { (VALUE, OK) };
+        let mut dismissed = false;
+        egui::Area::new(Id::new("toast"))
+            .anchor(egui::Align2::LEFT_BOTTOM, vec2(20.0, -20.0))
+            .order(egui::Order::Foreground)
+            .show(ctx, |ui| {
+                egui::Frame::NONE
+                    .fill(PANEL)
+                    .stroke(egui::Stroke::new(1.0, dot))
+                    .inner_margin(egui::Margin::symmetric(14, 8))
+                    .show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            dot_ui(ui, dot);
+                            Line::new().note(msg).tint(tint).show(ui);
+                            ui.add_space(8.0);
+                            dismissed = ui.add(Key::new("dismiss").outline(VALUE)).clicked();
+                        });
+                    });
             });
-        });
+        if dismissed {
+            self.status = None;
+        }
     }
 
     fn body(&mut self, ui: &mut Ui, acts: &mut Vec<Act>) {
