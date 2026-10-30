@@ -45,43 +45,73 @@ fn args(parts: &[&str], file: &Path) -> Vec<String> {
 
 fn install_line(archive: Archive, file: &Path, has: &dyn Fn(&str) -> bool) -> Vec<String> {
     match archive {
-        Archive::Deb if has("apt-get") => args(&["pkexec", "apt-get", "install", "-y"], file),
-        Archive::Deb => args(&["pkexec", "dpkg", "-i"], file),
-        Archive::Rpm if has("dnf") => args(&["pkexec", "dnf", "install", "-y"], file),
+        Archive::Deb if has("apt-get") => {
+            args(&["pkexec", "--disable-internal-agent", "apt-get", "install", "-y"], file)
+        }
+        Archive::Deb => args(&["pkexec", "--disable-internal-agent", "dpkg", "-i"], file),
+        Archive::Rpm if has("dnf") => {
+            args(&["pkexec", "--disable-internal-agent", "dnf", "install", "-y"], file)
+        }
         Archive::Rpm if has("zypper") => args(
-            &["pkexec", "zypper", "--non-interactive", "install", "--allow-unsigned-rpm"],
+            &[
+                "pkexec",
+                "--disable-internal-agent",
+                "zypper",
+                "--non-interactive",
+                "install",
+                "--allow-unsigned-rpm",
+            ],
             file,
         ),
-        _ => args(&["pkexec", "rpm", "-U"], file),
+        _ => args(&["pkexec", "--disable-internal-agent", "rpm", "-U"], file),
     }
 }
 
 fn remove_line(archive: Archive, package: &str, has: &dyn Fn(&str) -> bool) -> Vec<String> {
     let line: &[&str] = match archive {
-        Archive::Deb if has("apt-get") => &["pkexec", "apt-get", "remove", "-y"],
-        Archive::Deb => &["pkexec", "dpkg", "-r"],
-        Archive::Rpm if has("dnf") => &["pkexec", "dnf", "remove", "-y"],
-        Archive::Rpm if has("zypper") => &["pkexec", "zypper", "--non-interactive", "remove"],
-        _ => &["pkexec", "rpm", "-e"],
+        Archive::Deb if has("apt-get") => {
+            &["pkexec", "--disable-internal-agent", "apt-get", "remove", "-y"]
+        }
+        Archive::Deb => &["pkexec", "--disable-internal-agent", "dpkg", "-r"],
+        Archive::Rpm if has("dnf") => {
+            &["pkexec", "--disable-internal-agent", "dnf", "remove", "-y"]
+        }
+        Archive::Rpm if has("zypper") => {
+            &["pkexec", "--disable-internal-agent", "zypper", "--non-interactive", "remove"]
+        }
+        _ => &["pkexec", "--disable-internal-agent", "rpm", "-e"],
     };
     args(line, Path::new(package))
 }
 
 fn run(line: &[String], ok: &[i32]) -> Result<(), String> {
     let (program, rest) = line.split_first().ok_or("nothing to run")?;
-    let status = Command::new(program)
+    let out = Command::new(program)
         .args(rest)
-        .status()
+        .stdin(std::process::Stdio::null())
+        .output()
         .map_err(|e| format!("could not run {program}: {e}"))?;
+    let status = out.status;
     let code = status.code().unwrap_or(-1);
     if status.success() || ok.contains(&code) {
         return Ok(());
     }
-    Err(match (program.as_str(), code) {
+    Err(failure(program, rest, code, &String::from_utf8_lossy(&out.stderr), &status.to_string()))
+}
+
+fn failure(program: &str, rest: &[String], code: i32, stderr: &str, status: &str) -> String {
+    match (program, code) {
+        ("pkexec", 126 | 127) if stderr.contains("No authentication agent") => {
+            let manual = rest.get(1..).unwrap_or_default().join(" ");
+            format!(
+                "no polkit authentication agent is running, so nothing can ask for permission. \
+                 start one, or run: sudo {manual}"
+            )
+        }
         ("pkexec", 126 | 127) => "permission was not given".to_string(),
         ("msiexec", 1602 | 1223) => "the install was cancelled".to_string(),
         _ => format!("{program} failed: {status}"),
-    })
+    }
 }
 
 pub fn msi_install(file: &Path) -> Result<(), String> {
@@ -261,28 +291,50 @@ mod tests {
     fn packages_install_and_remove_through_pkexec() {
         let f = Path::new("/tmp/a.deb");
         let deb = install_line(Archive::Deb, f, &has(&["apt-get"]));
-        assert_eq!(deb, ["pkexec", "apt-get", "install", "-y", "/tmp/a.deb"]);
+        assert_eq!(
+            deb,
+            ["pkexec", "--disable-internal-agent", "apt-get", "install", "-y", "/tmp/a.deb"]
+        );
         assert_eq!(
             install_line(Archive::Deb, f, &has(&[])),
-            ["pkexec", "dpkg", "-i", "/tmp/a.deb"]
+            ["pkexec", "--disable-internal-agent", "dpkg", "-i", "/tmp/a.deb"]
         );
         let rpm = Path::new("/tmp/a.rpm");
         assert_eq!(
             install_line(Archive::Rpm, rpm, &has(&["dnf"])),
-            ["pkexec", "dnf", "install", "-y", "/tmp/a.rpm"]
+            ["pkexec", "--disable-internal-agent", "dnf", "install", "-y", "/tmp/a.rpm"]
         );
         assert_eq!(
             install_line(Archive::Rpm, rpm, &has(&[])),
-            ["pkexec", "rpm", "-U", "/tmp/a.rpm"]
+            ["pkexec", "--disable-internal-agent", "rpm", "-U", "/tmp/a.rpm"]
         );
         assert_eq!(
             remove_line(Archive::Deb, "cycler", &has(&["apt-get"])),
-            ["pkexec", "apt-get", "remove", "-y", "cycler"]
+            ["pkexec", "--disable-internal-agent", "apt-get", "remove", "-y", "cycler"]
         );
         assert_eq!(
             remove_line(Archive::Rpm, "cycler", &has(&["zypper"])),
-            ["pkexec", "zypper", "--non-interactive", "remove", "cycler"]
+            [
+                "pkexec",
+                "--disable-internal-agent",
+                "zypper",
+                "--non-interactive",
+                "remove",
+                "cycler"
+            ]
         );
+    }
+
+    #[test]
+    fn a_missing_polkit_agent_is_reported_instead_of_hanging() {
+        let rest: Vec<String> =
+            ["--disable-internal-agent", "apt-get", "install", "-y", "/tmp/a.deb"]
+                .map(String::from)
+                .into();
+        let msg = failure("pkexec", &rest, 127, "Error: No authentication agent found.", "");
+        assert!(msg.contains("no polkit authentication agent"), "{msg}");
+        assert!(msg.ends_with("sudo apt-get install -y /tmp/a.deb"), "{msg}");
+        assert_eq!(failure("pkexec", &rest, 126, "", ""), "permission was not given");
     }
 
     #[test]

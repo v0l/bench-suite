@@ -26,6 +26,10 @@ fn main() -> eframe::Result<()> {
     {
         viewport = viewport.with_icon(icon);
     }
-    let opts = eframe::NativeOptions { viewport, ..Default::default() };
+    let opts = eframe::NativeOptions {
+        viewport,
+        glow_options: eframe::egui_glow::GlowConfiguration { vsync: false, ..Default::default() },
+        ..Default::default()
+    };
     eframe::run_native("bench-suite", opts, Box::new(|cc| Ok(Box::new(app::Hub::new(cc)))))
 }

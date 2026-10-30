@@ -6,6 +6,12 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-30
+
+### Fixed
+- Installing a tool no longer hangs forever when no polkit authentication agent is running. It stops at once and prints the `sudo` command to run instead.
+- The window no longer shows "not responding" when it is on another workspace: vsync is off, so a hidden window is never blocked waiting for a frame.
+
 ## [0.8.0] - 2026-10-30
 
 ### Added
