@@ -743,7 +743,10 @@ mod tests {
             tool_named(tool).named(target, "v0.4.0", archive).map(|p| p.name)
         };
         assert_eq!(
-            tool_named("testbench").named(Target::LinuxX64, "v0.1.0", Archive::Deb).map(|p| p.name).as_deref(),
+            tool_named("testbench")
+                .named(Target::LinuxX64, "v0.1.0", Archive::Deb)
+                .map(|p| p.name)
+                .as_deref(),
             Some("testbench-v0.1.0-x86_64-unknown-linux-gnu.deb")
         );
         assert_eq!(

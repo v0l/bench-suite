@@ -121,11 +121,11 @@ impl Hub {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let label = if checking { "checking" } else { "check for updates" };
                 let target = self.target.map(Target::label).unwrap_or("no published build");
-                let r = ui
-                    .add(Key::new(label).outline(VALUE).enabled(!checking))
-                    .on_hover_text(format!(
+                let r = ui.add(Key::new(label).outline(VALUE).enabled(!checking)).on_hover_text(
+                    format!(
                         "ask GitHub for the newest release of every tool\ninstalling for {target}"
-                    ));
+                    ),
+                );
                 if r.clicked() {
                     acts.push(Act::Check);
                 }
