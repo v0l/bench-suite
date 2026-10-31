@@ -81,22 +81,24 @@ pub fn tools() -> Vec<Entry> {
             "Every tool the suite manages: whether it is installed, its version, the \
              latest release, whether an update is out, what files it opens and how many \
              copies are running. Also the suite's own version.",
-            |_, cx| cx.ask("list_tools", Value::Null).map(|v| v.to_string()),
+            |_, cx| async move { cx.ask("list_tools", Value::Null).await.map(|v| v.to_string()) },
         ),
         Entry::plain(
             "check_updates",
             "Ask GitHub for the newest release of every tool and of the suite, wait for \
              the answer, and return the same list as list_tools.",
-            |_, cx| cx.ask("check_updates", Value::Null).map(|v| v.to_string()),
+            |_, cx| async move {
+                cx.ask("check_updates", Value::Null).await.map(|v| v.to_string())
+            },
         ),
         Entry::new(
             "install",
             "Download and install a tool, or update it when a newer release is out. \
              Waits until it finishes and reports the result.",
             object(json!({ "tool": tool }), &["tool"]),
-            |args, cx| {
-                tool_of(args)?;
-                cx.ask("install", args.clone()).map(|v| v.to_string())
+            |args, cx| async move {
+                tool_of(&args)?;
+                cx.ask("install", args).await.map(|v| v.to_string())
             },
         )
         .summarised_by(|args| text(args, "tool")),
@@ -105,9 +107,9 @@ pub fn tools() -> Vec<Entry> {
             "Remove a tool the suite installed. The user is asked to confirm in the \
              window; the answer says whether they did.",
             object(json!({ "tool": tool }), &["tool"]),
-            |args, cx| {
-                tool_of(args)?;
-                cx.ask("uninstall", args.clone()).map(|v| v.to_string())
+            |args, cx| async move {
+                tool_of(&args)?;
+                cx.ask("uninstall", args).await.map(|v| v.to_string())
             },
         )
         .summarised_by(|args| text(args, "tool")),
@@ -124,7 +126,7 @@ pub fn tools() -> Vec<Entry> {
                 }),
                 &["tool"],
             ),
-            super::local::launch,
+            |args, cx| async move { super::local::launch(&args, &cx).await },
         )
         .summarised_by(|args| {
             Some(format!(
@@ -150,7 +152,7 @@ pub fn tools() -> Vec<Entry> {
                 }),
                 &["tool"],
             ),
-            super::local::run_tool,
+            |args, cx| async move { super::local::run_tool(&args, &cx).await },
         )
         .summarised_by(run_tool_summary),
     ]

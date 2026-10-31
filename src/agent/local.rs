@@ -2,7 +2,7 @@ use super::tools::{text, tool_of};
 use crate::catalog::{TOOLS, Target, Tool};
 use egui_bench::agent::Cx;
 use egui_bench::agent::grants::Access;
-use egui_bench::agent::local::{execute, report};
+use egui_bench::agent::spawn::{self, Confine};
 use egui_bench::agent::workspace::Workspace;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
@@ -11,16 +11,16 @@ use std::time::{Duration, Instant};
 const DEFAULT_TIMEOUT: u64 = 120;
 const MAX_TIMEOUT: u64 = 900;
 
-pub fn launch(args: &Value, cx: &Cx) -> Result<String, String> {
+pub async fn launch(args: &Value, cx: &Cx) -> Result<String, String> {
     let tool = tool_of(args)?;
     let path = match text(args, "path") {
         Some(p) => Some(cx.workspace.resolve(&p)?.display().to_string()),
         None => None,
     };
-    cx.ask("launch", serde_json::json!({ "tool": tool, "path": path })).map(|v| v.to_string())
+    cx.ask("launch", serde_json::json!({ "tool": tool, "path": path })).await.map(|v| v.to_string())
 }
 
-pub fn run_tool(args: &Value, cx: &Cx) -> Result<String, String> {
+pub async fn run_tool(args: &Value, cx: &Cx) -> Result<String, String> {
     let name = tool_of(args)?;
     let tool = TOOLS
         .iter()
@@ -39,8 +39,8 @@ pub fn run_tool(args: &Value, cx: &Cx) -> Result<String, String> {
         Some(Value::Null) | None => Vec::new(),
         Some(_) => return Err("`args` is a list of strings".into()),
     };
-    vet(tool, &argv, cx.workspace)?;
-    let exe = cx.ask("path", serde_json::json!({ "tool": tool.name }))?;
+    vet(tool, &argv, &cx.workspace)?;
+    let exe = cx.ask("path", serde_json::json!({ "tool": tool.name })).await?;
     let exe = exe
         .get("path")
         .and_then(Value::as_str)
@@ -54,15 +54,17 @@ pub fn run_tool(args: &Value, cx: &Cx) -> Result<String, String> {
         .clamp(1, MAX_TIMEOUT);
     let stdin = text(args, "stdin");
     let started = Instant::now();
-    let out = execute(
-        &program,
-        &argv,
-        cx.workspace.root(),
-        stdin.as_deref(),
-        Duration::from_secs(timeout),
-        cx.stop,
-    )?;
-    report(format!("$ {} {}\n", tool.cli_bin_or_name(), argv.join(" ")), out, started, timeout)
+    let command = spawn::line(&program, &argv);
+    let prepared =
+        spawn::prepare(&command, cx.workspace.root(), &Confine::Open { env: Vec::new() })?;
+    let out =
+        spawn::run(prepared, stdin.as_deref(), Duration::from_secs(timeout), &cx.stop).await?;
+    spawn::report(
+        format!("$ {} {}\n", tool.cli_bin_or_name(), argv.join(" ")),
+        out,
+        started.elapsed(),
+        timeout,
+    )
 }
 
 impl Tool {

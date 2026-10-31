@@ -347,7 +347,7 @@ impl Hub {
 
     pub fn dropped(&mut self, ctx: &egui::Context) {
         let files: Vec<PathBuf> =
-            ctx.input(|i| i.raw.dropped_files.iter().filter_map(|f| f.path.clone()).collect());
+            ctx.input(|i| i.raw.dropped_files.iter().map(|f| f.path().to_path_buf()).collect());
         for path in files {
             match self.slot_for(&path) {
                 Some(i) => self.launch(i, Some(path)),

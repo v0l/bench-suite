@@ -265,7 +265,7 @@ impl Hub {
         };
         let (tint, dot) = if fault { (FAULT, FAULT) } else { (VALUE, OK) };
         let mut dismissed = false;
-        egui::Area::new(Id::new("toast"))
+        egui::Area::new(Id::unique("toast"))
             .anchor(egui::Align2::LEFT_BOTTOM, vec2(20.0, -20.0))
             .order(egui::Order::Foreground)
             .show(ctx, |ui| {
@@ -405,7 +405,7 @@ impl Hub {
         let installable = slot.installable(self.target);
 
         let hovered = ui.rect_contains_pointer(rect);
-        let open_page = ui.interact(rect, Id::new(("card", i)), Sense::click());
+        let open_page = ui.interact(rect, Id::unique(("card", i)), Sense::click());
         if hovered {
             ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
         }
@@ -602,7 +602,7 @@ impl Hub {
         }
         if let (State::Failed(e), None) = (state, &slot.exe) {
             note("waiting on GitHub for the latest release".into(), LEGEND);
-            ui.interact(row, Id::new(("why", slot.tool.name)), Sense::hover()).on_hover_text(e);
+            ui.interact(row, Id::unique(("why", slot.tool.name)), Sense::hover()).on_hover_text(e);
             return;
         }
         if slot.managed && !slot.behind() && slot.tool.skill.is_some() {
@@ -610,7 +610,7 @@ impl Hub {
                 Err(e) => return note(e.clone(), FAULT),
                 Ok(placed) if !placed.is_empty() => {
                     note(skill_line(slot.tool, placed), LEGEND);
-                    ui.interact(row, Id::new(("skill", slot.tool.name)), Sense::hover())
+                    ui.interact(row, Id::unique(("skill", slot.tool.name)), Sense::hover())
                         .on_hover_text(skill_hover(placed));
                     return;
                 }
@@ -630,7 +630,7 @@ impl Hub {
                     (false, _, _, _, _) => format!("found at {}", tidy(exe)),
                 };
                 note(text, LEGEND);
-                ui.interact(row, Id::new(("where", slot.tool.name)), Sense::hover())
+                ui.interact(row, Id::unique(("where", slot.tool.name)), Sense::hover())
                     .on_hover_text(exe.display().to_string());
             }
             (None, Some(r), Some(b)) => {
@@ -796,7 +796,7 @@ impl Hub {
     fn confirm_removal(&mut self, ctx: &egui::Context, acts: &mut Vec<Act>) {
         let Some(i) = self.removing else { return };
         let tool = self.slots[i].tool;
-        let modal = egui::Modal::new(Id::new("remove"))
+        let modal = egui::Modal::new(Id::unique("remove"))
             .backdrop_color(egui::Color32::from_black_alpha(150))
             .show(ctx, |ui| {
                 ui.set_width(380.0);
@@ -922,7 +922,7 @@ fn elide_job(ui: &Ui, mut job: LayoutJob, width: f32) -> std::sync::Arc<egui::Ga
 }
 
 fn search_id() -> Id {
-    Id::new("search")
+    Id::unique("search")
 }
 
 pub(crate) fn megabytes(bytes: u64) -> String {

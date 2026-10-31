@@ -6,6 +6,11 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-10-30
+
+### Changed
+- egui and eframe 0.37, which keeps the window running on Wayland when its workspace is hidden.
+
 ## [0.8.1] - 2026-10-30
 
 ### Fixed

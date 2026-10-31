@@ -2,7 +2,7 @@ use super::tools;
 use crate::catalog::TOOLS;
 use egui_bench::agent::skillset::Skill;
 use egui_bench::agent::toolkit::Toolkit;
-use egui_bench::agent::{Backend, Cx, Welcome};
+use egui_bench::agent::{Backend, Cx, Welcome, async_trait};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
@@ -18,6 +18,7 @@ impl Default for Suite {
     }
 }
 
+#[async_trait]
 impl Backend for Suite {
     fn app(&self) -> &'static str {
         "bench-suite"
@@ -53,8 +54,8 @@ impl Backend for Suite {
         TOOLS.iter().filter_map(|t| t.skill.map(String::from)).collect()
     }
 
-    fn tool_dirs(&self, cx: &Cx) -> Vec<PathBuf> {
-        let Ok(dirs) = cx.ask("dirs", Value::Null) else { return Vec::new() };
+    async fn tool_dirs(&self, cx: &Cx) -> Vec<PathBuf> {
+        let Ok(dirs) = cx.ask("dirs", Value::Null).await else { return Vec::new() };
         dirs.get("dirs")
             .and_then(Value::as_array)
             .map(|a| a.iter().filter_map(|v| v.as_str().map(PathBuf::from)).collect())
