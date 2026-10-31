@@ -6,6 +6,11 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-10-31
+
+### Changed
+- vsync is on again. The hang on a hidden workspace is fixed in egui 0.37, so the workaround is gone.
+
 ## [0.8.3] - 2026-10-31
 
 ### Fixed
