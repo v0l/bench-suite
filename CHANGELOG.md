@@ -6,6 +6,11 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.8.5] - 2026-11-01
+
+### Fixed
+- Copy and paste work again and links open in the browser, which the egui 0.37 bump had broken. The window renders with wgpu instead of glow.
+
 ## [0.8.4] - 2026-10-31
 
 ### Changed
