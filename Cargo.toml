@@ -11,7 +11,7 @@ repository = "https://github.com/v0l/bench-suite"
 dirs = "6"
 eframe = { version = "0.37", default-features = false, features = [
     "default_fonts",
-    "glow",
+    "wgpu",
     "persistence",
     "wayland",
     "x11",
