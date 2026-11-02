@@ -263,26 +263,8 @@ impl Hub {
         let Some((msg, fault)) = self.status.clone() else {
             return;
         };
-        let (tint, dot) = if fault { (FAULT, FAULT) } else { (VALUE, OK) };
-        let mut dismissed = false;
-        egui::Area::new(Id::unique("toast"))
-            .anchor(egui::Align2::LEFT_BOTTOM, vec2(20.0, -20.0))
-            .order(egui::Order::Foreground)
-            .show(ctx, |ui| {
-                egui::Frame::NONE
-                    .fill(PANEL)
-                    .stroke(egui::Stroke::new(1.0, dot))
-                    .inner_margin(egui::Margin::symmetric(14, 8))
-                    .show(ui, |ui| {
-                        ui.horizontal(|ui| {
-                            dot_ui(ui, dot);
-                            Line::new().note(msg).tint(tint).show(ui);
-                            ui.add_space(8.0);
-                            dismissed = ui.add(Key::new("dismiss").outline(VALUE)).clicked();
-                        });
-                    });
-            });
-        if dismissed {
+        let tone = if fault { Tone::Fault } else { Tone::Ok };
+        if egui_bench::toast::toast(ctx, "status", &msg, tone) {
             self.status = None;
         }
     }
@@ -888,11 +870,6 @@ fn progress(install: &Install) -> Option<(Option<f32>, String)> {
         Install::Unpacking => Some((None, "installing".into())),
         _ => None,
     }
-}
-
-fn dot_ui(ui: &mut Ui, tint: Color32) {
-    let (rect, _) = ui.allocate_exact_size(vec2(10.0, 16.0), Sense::hover());
-    ui.painter().circle_filled(rect.center(), 3.0, tint);
 }
 
 pub(crate) fn rule(ui: &Ui, a: Pos2, b: Pos2) {
