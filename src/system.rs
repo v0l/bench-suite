@@ -21,7 +21,24 @@ pub fn linux_format() -> Option<Archive> {
     if !cfg!(target_os = "linux") {
         return None;
     }
+    if !agent_running() {
+        return None;
+    }
     format_for(on_path)
+}
+
+fn agent_running() -> bool {
+    let Ok(procs) = fs::read_dir("/proc") else { return true };
+    procs
+        .flatten()
+        .filter_map(|p| fs::read_to_string(p.path().join("comm")).ok())
+        .any(|comm| is_agent(comm.trim()))
+}
+
+fn is_agent(comm: &str) -> bool {
+    let comm = comm.to_lowercase();
+    comm == "gnome-shell"
+        || ((comm.contains("polkit") || comm.contains("policykit")) && comm != "polkitd")
 }
 
 fn format_for(has: impl Fn(&str) -> bool) -> Option<Archive> {
@@ -285,6 +302,16 @@ mod tests {
         assert_eq!(format_for(has(&["pkexec", "rpm"])), Some(Archive::Rpm));
         assert_eq!(format_for(has(&["dpkg", "apt-get"])), None, "nothing to ask permission with");
         assert_eq!(format_for(has(&["pkexec"])), None);
+    }
+
+    #[test]
+    fn only_a_running_agent_counts_not_the_polkit_daemon() {
+        assert!(is_agent("polkit-kde-auth"));
+        assert!(is_agent("polkit-gnome-au"));
+        assert!(is_agent("lxqt-policykit-"));
+        assert!(is_agent("gnome-shell"));
+        assert!(!is_agent("polkitd"));
+        assert!(!is_agent("bash"));
     }
 
     #[test]
