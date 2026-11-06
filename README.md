@@ -18,6 +18,7 @@ releases, keeps it up to date, and starts it.
 | [agentbench](https://github.com/v0l/agentbench) | Coding agents in your git projects, with an issue tracker beside them |
 | [coldbench](https://github.com/v0l/coldbench) | Bitcoin wallet for Jade, Coldcard and Trezor, laid out like Sparrow |
 | [ngrind](https://github.com/v0l/ngrind) | Vanity npubs and NIP-13 proof of work on the GPU or CPU |
+| [Inference Bench](https://github.com/v0l/inference-bench) | Compare LLM inference backends on speed, first token time, memory and accuracy |
 
 Every tool keeps its own repo, version and release. The suite only reads them.
 

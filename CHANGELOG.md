@@ -6,6 +6,9 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Inference Bench in the catalog.
+
 ### Fixed
 - The dismiss button on the notification no longer wraps its text onto several lines.
 
