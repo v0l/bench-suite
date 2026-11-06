@@ -172,7 +172,10 @@ pub const INFERENCE_BENCH: &str = "\
 Compares LLM inference backends on the same prompt. A run measures prefill and decode tokens per \
 second, time to first token, peak memory and the generated text, and a matrix runs every model on \
 every backend and saves each result as JSON. The suite starts its window, the `inference-bench-ui` \
-binary. It opens no files.\n\
+binary, an LM Studio style app with Chat, Models, Bench, Server and Settings tabs: it lists local \
+models with a supported or unsupported architecture badge per backend, downloads from Hugging Face, \
+chats with streaming replies and live tok/s, runs the matrix, and serves the loaded model on an \
+OpenAI-compatible port. It opens no files.\n\
 Backends are any OpenAI-compatible server (vLLM, llama.cpp server, mistral.rs, Ollama, YALR), a \
 `transformers` subprocess that doubles as the accuracy reference, and `specrt`, a CUDA runtime \
 where a model is a TOML spec. A cell that fails keeps the backend's own error, and a model a \

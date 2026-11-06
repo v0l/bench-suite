@@ -605,10 +605,11 @@ pub const TOOLS: [Tool; 14] = [
         name: "inference-bench",
         title: "Inference Bench",
         tagline: "Compare LLM inference backends",
-        blurb: "Run the same prompt through llama.cpp, vLLM, Ollama, transformers and the specrt \
-                runtime and compare speed, first token time, memory and logit accuracy.",
+        blurb: "A local LLM app: browse and download models, chat, serve an OpenAI-compatible API, and \
+                benchmark llama.cpp, vLLM, transformers and the specrt runtime.",
         guide: crate::guides::INFERENCE_BENCH,
         features: &[
+            "Chat, Models, Bench, Server and Settings tabs in the style of LM Studio",
             "Runs one model across several backends and shows a model by backend matrix",
             "Measures prefill and decode tokens per second, time to first token and peak memory",
             "Talks to any OpenAI-compatible server: vLLM, llama.cpp, mistral.rs, Ollama, YALR",
