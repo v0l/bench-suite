@@ -90,7 +90,7 @@ fn check_bf16(spec_file: &str) {
     let mut rt = Runtime::load(&spec, 256).unwrap();
     let ours = rt.prompt_logits(&reference.tokens).unwrap();
     let d = diff(&ours, &reference);
-    assert!(d.max_abs <= 2e-2, "max abs diff {}", d.max_abs);
+    assert!(d.max_abs <= 1e-3, "max abs diff {}", d.max_abs);
     assert_eq!(d.top1_agreement, 1.0);
     let greedy = rt.generate(&reference.tokens, reference.greedy.len()).unwrap();
     assert_eq!(greedy.tokens, reference.greedy);
@@ -115,6 +115,6 @@ fn qwen3_q8_logits_stay_close_to_transformers() {
     let reference = reference("qwen3-0.6b");
     let mut rt = Runtime::load(&spec, 256).unwrap();
     let d = diff(&rt.prompt_logits(&reference.tokens).unwrap(), &reference);
-    assert!(d.mean_abs <= 0.25, "mean abs diff {}", d.mean_abs);
-    assert!(d.top1_agreement >= 0.9, "top1 agreement {}", d.top1_agreement);
+    assert!(d.mean_abs <= 0.1, "mean abs diff {}", d.mean_abs);
+    assert!(d.top1_agreement >= 0.95, "top1 agreement {}", d.top1_agreement);
 }
