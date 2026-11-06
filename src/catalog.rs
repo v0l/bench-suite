@@ -251,7 +251,7 @@ fn waveshark(tool: &Tool, target: Target, tag: &str, archive: Archive) -> Option
     Some(Package { name, archive })
 }
 
-pub const TOOLS: [Tool; 13] = [
+pub const TOOLS: [Tool; 14] = [
     Tool {
         name: "gcad",
         title: "gcad",
@@ -600,6 +600,32 @@ pub const TOOLS: [Tool; 13] = [
         version_flag: true,
         skill: None,
         asset: unversioned,
+    },
+    Tool {
+        name: "inference-bench",
+        title: "Inference Bench",
+        tagline: "Compare LLM inference backends",
+        blurb: "Run the same prompt through llama.cpp, vLLM, Ollama, transformers and the specrt \
+                runtime and compare speed, first token time, memory and logit accuracy.",
+        guide: crate::guides::INFERENCE_BENCH,
+        features: &[
+            "Runs one model across several backends and shows a model by backend matrix",
+            "Measures prefill and decode tokens per second, time to first token and peak memory",
+            "Talks to any OpenAI-compatible server: vLLM, llama.cpp, mistral.rs, Ollama, YALR",
+            "Runs transformers as the reference and the native specrt CUDA runtime",
+            "Reports the real error per cell, including an unsupported architecture",
+            "Checks logits against transformers, and keeps every run as JSON with charts",
+        ],
+        cli: &["results"],
+        cli_bin: "inference-bench",
+        group: Group::Develop,
+        repo: "v0l/inference-bench",
+        bin: "inference-bench-ui",
+        verb: &[],
+        opens: Opens::Nothing,
+        version_flag: false,
+        skill: None,
+        asset: tagged,
     },
     Tool {
         name: "ngrind",

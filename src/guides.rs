@@ -168,6 +168,22 @@ address or amount for them, and never broadcast. `--devices` lists plugged in si
 Reach for it when the user wants to see a hardware wallet's balance or history, receive to it, or \
 pay from it.";
 
+pub const INFERENCE_BENCH: &str = "\
+Compares LLM inference backends on the same prompt. A run measures prefill and decode tokens per \
+second, time to first token, peak memory and the generated text, and a matrix runs every model on \
+every backend and saves each result as JSON. The suite starts its window, the `inference-bench-ui` \
+binary. It opens no files.\n\
+Backends are any OpenAI-compatible server (vLLM, llama.cpp server, mistral.rs, Ollama, YALR), a \
+`transformers` subprocess that doubles as the accuracy reference, and `specrt`, a CUDA runtime \
+where a model is a TOML spec. A cell that fails keeps the backend's own error, and a model a \
+backend cannot load shows as an unsupported architecture. `logit-diff` compares a backend's \
+logits with transformers on a fixed prompt.\n\
+The agent can run only `inference-bench results`, which prints the saved runs. `run` and `matrix` \
+load models and use the GPU, so launch the window or tell the user the command, for example \
+`inference-bench matrix matrix.toml`.\n\
+Reach for it when the user wants to know which inference engine is fastest for a model, or whether \
+a backend supports it.";
+
 pub const NGRIND: &str = "\
 Mines vanity npubs and NIP-13 proof of work events for Nostr, on the GPU or the CPU. Backends are \
 cuda (NVIDIA, by a wide margin the fastest), wgpu (any GPU with Vulkan, Metal or DirectX 12) and \
