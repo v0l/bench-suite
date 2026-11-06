@@ -53,7 +53,10 @@ fn quant_override_parses() {
 fn rejects_unsupported_rope_scaling() {
     let json = std::fs::read_to_string(root().join("tests/fixtures/qwen3-0.6b.config.json"))
         .unwrap()
-        .replace("\"rope_scaling\": null", "\"rope_scaling\": {\"type\": \"yarn\", \"factor\": 4.0}");
+        .replace(
+            "\"rope_scaling\": null",
+            "\"rope_scaling\": {\"type\": \"yarn\", \"factor\": 4.0}",
+        );
     assert!(Spec::from_hf_config(&json).is_err());
 }
 

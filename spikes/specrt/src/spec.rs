@@ -165,31 +165,18 @@ impl Spec {
                 vocab: hf.vocab_size,
                 tie_embeddings: hf.tie_word_embeddings,
             },
-            layers: Layers {
-                count: hf.num_hidden_layers,
-                pattern: vec![Block::Dense],
-            },
-            norm: Norm {
-                kind: NormKind::Rmsnorm,
-                eps: hf.rms_norm_eps,
-            },
+            layers: Layers { count: hf.num_hidden_layers, pattern: vec![Block::Dense] },
+            norm: Norm { kind: NormKind::Rmsnorm, eps: hf.rms_norm_eps },
             attention: Attention {
                 kind: AttentionKind::Gqa,
                 heads: hf.num_attention_heads,
                 kv_heads: hf.num_key_value_heads.unwrap_or(hf.num_attention_heads),
-                head_dim: hf
-                    .head_dim
-                    .unwrap_or(hf.hidden_size / hf.num_attention_heads),
+                head_dim: hf.head_dim.unwrap_or(hf.hidden_size / hf.num_attention_heads),
                 qkv_bias,
                 qk_norm,
             },
-            rope: Rope {
-                style: RopeStyle::Neox,
-                theta: hf.rope_theta,
-            },
-            mlp: Mlp {
-                activation: Activation::Swiglu,
-            },
+            rope: Rope { style: RopeStyle::Neox, theta: hf.rope_theta },
+            mlp: Mlp { activation: Activation::Swiglu },
         };
         spec.validate()?;
         Ok(spec)
@@ -197,10 +184,16 @@ impl Spec {
 
     pub fn validate(&self) -> Result<()> {
         let a = &self.attention;
-        ensure!(a.kv_heads > 0 && a.heads % a.kv_heads == 0, "heads must be a multiple of kv_heads");
-        ensure!(a.head_dim % 2 == 0 && a.head_dim <= 256, "head_dim must be even and at most 256");
-        ensure!(self.dims.hidden % 8 == 0, "hidden must be a multiple of 8");
-        ensure!(self.dims.intermediate % 8 == 0, "intermediate must be a multiple of 8");
+        ensure!(
+            a.kv_heads > 0 && a.heads.is_multiple_of(a.kv_heads),
+            "heads must be a multiple of kv_heads"
+        );
+        ensure!(
+            a.head_dim.is_multiple_of(2) && a.head_dim <= 256,
+            "head_dim must be even and at most 256"
+        );
+        ensure!(self.dims.hidden.is_multiple_of(8), "hidden must be a multiple of 8");
+        ensure!(self.dims.intermediate.is_multiple_of(8), "intermediate must be a multiple of 8");
         ensure!(!self.layers.pattern.is_empty(), "layer pattern is empty");
         ensure!(self.layers.count > 0, "no layers");
         Ok(())

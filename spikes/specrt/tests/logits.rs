@@ -14,29 +14,21 @@ fn root() -> &'static Path {
 }
 
 fn reference(name: &str) -> Reference {
-    let dir = std::env::var_os("SPECRT_REF_DIR")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| root().join("out"));
-    let meta: serde_json::Value =
-        serde_json::from_str(&std::fs::read_to_string(dir.join(format!("{name}.ref.json"))).unwrap())
-            .unwrap();
+    let dir =
+        std::env::var_os("SPECRT_REF_DIR").map(PathBuf::from).unwrap_or_else(|| root().join("out"));
+    let meta: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(dir.join(format!("{name}.ref.json"))).unwrap(),
+    )
+    .unwrap();
     let ids = |key: &str| -> Vec<u32> {
-        meta[key]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|v| v.as_u64().unwrap() as u32)
-            .collect()
+        meta[key].as_array().unwrap().iter().map(|v| v.as_u64().unwrap() as u32).collect()
     };
     let bytes = std::fs::read(dir.join(format!("{name}.ref.bin"))).unwrap();
     Reference {
         tokens: ids("tokens"),
         greedy: ids("greedy"),
         vocab: meta["vocab"].as_u64().unwrap() as usize,
-        logits: bytes
-            .chunks_exact(4)
-            .map(|b| f32::from_le_bytes(b.try_into().unwrap()))
-            .collect(),
+        logits: bytes.as_chunks::<4>().0.iter().map(|b| f32::from_le_bytes(*b)).collect(),
     }
 }
 
@@ -77,10 +69,7 @@ fn diff(ours: &[f32], reference: &Reference) -> Diff {
         mean_abs: (sum / ours.len() as f64) as f32,
         top1_agreement: agree as f32 / rows as f32,
     };
-    eprintln!(
-        "max_abs {:.5} mean_abs {:.6} top1 {:.3}",
-        d.max_abs, d.mean_abs, d.top1_agreement
-    );
+    eprintln!("max_abs {:.5} mean_abs {:.6} top1 {:.3}", d.max_abs, d.mean_abs, d.top1_agreement);
     d
 }
 

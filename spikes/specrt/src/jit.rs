@@ -21,9 +21,7 @@ pub struct Loaded {
 
 impl Loaded {
     pub fn function(&self, name: &str) -> Result<CudaFunction> {
-        self.module
-            .load_function(name)
-            .with_context(|| format!("kernel {name}"))
+        self.module.load_function(name).with_context(|| format!("kernel {name}"))
     }
 }
 
@@ -42,11 +40,7 @@ pub fn cache_key(source: &str, arch: &str, options: &[String]) -> String {
 pub fn default_cache_dir() -> PathBuf {
     std::env::var_os("SPECRT_CACHE")
         .map(PathBuf::from)
-        .unwrap_or_else(|| {
-            dirs::cache_dir()
-                .unwrap_or_else(std::env::temp_dir)
-                .join("specrt")
-        })
+        .unwrap_or_else(|| dirs::cache_dir().unwrap_or_else(std::env::temp_dir).join("specrt"))
 }
 
 impl Jit {
@@ -54,12 +48,7 @@ impl Jit {
         let (major, minor) = ctx.compute_capability()?;
         let arch: &'static str = Box::leak(format!("compute_{major}{minor}").into_boxed_str());
         std::fs::create_dir_all(&dir)?;
-        Ok(Jit {
-            ctx,
-            dir,
-            arch,
-            options: vec!["--std=c++17".to_string()],
-        })
+        Ok(Jit { ctx, dir, arch, options: vec!["--std=c++17".to_string()] })
     }
 
     pub fn arch(&self) -> &str {
@@ -87,10 +76,6 @@ impl Jit {
             }
         };
         let module = self.ctx.load_module(Ptx::from_src(ptx))?;
-        Ok(Loaded {
-            module,
-            cache_hit,
-            key,
-        })
+        Ok(Loaded { module, cache_hit, key })
     }
 }

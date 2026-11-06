@@ -4,7 +4,9 @@ use crate::spec::Spec;
 use crate::weights::{Matrix, Weights, find_safetensors};
 use anyhow::{Context, Result, ensure};
 use cudarc::driver::sys::{CUgraphInstantiate_flags, CUstreamCaptureMode};
-use cudarc::driver::{CudaContext, CudaFunction, CudaGraph, CudaSlice, CudaStream, LaunchConfig, PushKernelArg};
+use cudarc::driver::{
+    CudaContext, CudaFunction, CudaGraph, CudaSlice, CudaStream, LaunchConfig, PushKernelArg,
+};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
@@ -70,11 +72,7 @@ fn grid(n: usize, per_block: usize) -> u32 {
 }
 
 fn cfg(grid: u32, block: u32) -> LaunchConfig {
-    LaunchConfig {
-        grid_dim: (grid, 1, 1),
-        block_dim: (block, 1, 1),
-        shared_mem_bytes: 0,
-    }
+    LaunchConfig { grid_dim: (grid, 1, 1), block_dim: (block, 1, 1), shared_mem_bytes: 0 }
 }
 
 const LINEAR_ROWS_PER_BLOCK: usize = 8;
@@ -124,7 +122,8 @@ impl Runtime {
         }
         let d = &spec.dims;
         let pages = max_ctx.div_ceil(PAGE);
-        let cache_len = spec.layers.count * pages * spec.attention.kv_heads * PAGE * spec.attention.head_dim;
+        let cache_len =
+            spec.layers.count * pages * spec.attention.kv_heads * PAGE * spec.attention.head_dim;
         let table: Vec<i32> = (0..pages as i32).rev().collect();
         let buf = Buffers {
             x: stream.alloc_zeros(d.hidden)?,
@@ -165,7 +164,15 @@ impl Runtime {
         &self.kernels[name]
     }
 
-    fn linear(&self, name: &str, w: &DeviceMatrix, bias: Option<&CudaSlice<f32>>, x: &CudaSlice<f32>, out: &CudaSlice<f32>, rows: usize) -> Result<()> {
+    fn linear(
+        &self,
+        name: &str,
+        w: &DeviceMatrix,
+        bias: Option<&CudaSlice<f32>>,
+        x: &CudaSlice<f32>,
+        out: &CudaSlice<f32>,
+        rows: usize,
+    ) -> Result<()> {
         let mut b = self.stream.launch_builder(self.kernel(name));
         match w {
             DeviceMatrix::Bf16(w) => b.arg(w).arg(&self.buf.dummy),
@@ -216,7 +223,14 @@ impl Runtime {
             unsafe { b.launch(cfg(a.heads as u32, 128)) }?;
             self.linear("o_proj", &l.o, None, &buf.attn, &buf.x, s.dims.hidden)?;
             self.rmsnorm(&buf.x, &l.ln2, &buf.xn)?;
-            self.linear("gate_up_proj", &l.gate_up, None, &buf.xn, &buf.gate_up, 2 * s.dims.intermediate)?;
+            self.linear(
+                "gate_up_proj",
+                &l.gate_up,
+                None,
+                &buf.xn,
+                &buf.gate_up,
+                2 * s.dims.intermediate,
+            )?;
             let mut b = self.stream.launch_builder(self.kernel("swiglu"));
             b.arg(&buf.gate_up).arg(&buf.act);
             unsafe { b.launch(cfg(grid(s.dims.intermediate, 256), 256)) }?;
@@ -230,11 +244,7 @@ impl Runtime {
     fn advance(&self) -> Result<()> {
         let buf = &self.buf;
         let mut b = self.stream.launch_builder(self.kernel("argmax_advance"));
-        b.arg(&buf.logits)
-            .arg(&buf.token)
-            .arg(&buf.pos)
-            .arg(&buf.history)
-            .arg(&buf.count);
+        b.arg(&buf.logits).arg(&buf.token).arg(&buf.pos).arg(&buf.history).arg(&buf.count);
         unsafe { b.launch(cfg(1, 1024)) }?;
         Ok(())
     }
@@ -257,8 +267,7 @@ impl Runtime {
     }
 
     fn capture(&self) -> Result<CudaGraph> {
-        self.stream
-            .begin_capture(CUstreamCaptureMode::CU_STREAM_CAPTURE_MODE_THREAD_LOCAL)?;
+        self.stream.begin_capture(CUstreamCaptureMode::CU_STREAM_CAPTURE_MODE_THREAD_LOCAL)?;
         let recorded = self.step().and_then(|_| self.advance());
         let graph = self.stream.end_capture(CUgraphInstantiate_flags(0))?;
         recorded?;
@@ -267,7 +276,10 @@ impl Runtime {
 
     pub fn generate(&mut self, prompt: &[u32], new_tokens: usize) -> Result<Generation> {
         ensure!(!prompt.is_empty() && new_tokens > 0, "empty prompt or nothing to generate");
-        ensure!(prompt.len() + new_tokens <= self.max_ctx, "prompt plus generation exceeds max_ctx");
+        ensure!(
+            prompt.len() + new_tokens <= self.max_ctx,
+            "prompt plus generation exceeds max_ctx"
+        );
         let started = Instant::now();
         self.stream.memcpy_htod(&[0i32], &mut self.buf.count)?;
         for (pos, &t) in prompt.iter().enumerate() {

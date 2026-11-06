@@ -36,15 +36,12 @@ pub fn hub_dir() -> PathBuf {
     if let Some(home) = std::env::var_os("HF_HOME") {
         return PathBuf::from(home).join("hub");
     }
-    dirs::home_dir()
-        .unwrap_or_default()
-        .join(".cache/huggingface/hub")
+    dirs::home_dir().unwrap_or_default().join(".cache/huggingface/hub")
 }
 
 pub fn find_safetensors(repo: &str) -> Result<PathBuf> {
-    let snapshots = hub_dir()
-        .join(format!("models--{}", repo.replace('/', "--")))
-        .join("snapshots");
+    let snapshots =
+        hub_dir().join(format!("models--{}", repo.replace('/', "--"))).join("snapshots");
     for entry in std::fs::read_dir(&snapshots).with_context(|| snapshots.display().to_string())? {
         let file = entry?.path().join("model.safetensors");
         if file.exists() {
@@ -63,10 +60,7 @@ impl Reader<'_> {
         let t = self.st.tensor(name).with_context(|| name.to_string())?;
         ensure!(t.dtype() == Dtype::BF16, "{name} is {:?}, expected bf16", t.dtype());
         ensure!(t.shape() == shape, "{name} has shape {:?}, expected {shape:?}", t.shape());
-        Ok(t.data()
-            .chunks_exact(2)
-            .map(|b| u16::from_le_bytes([b[0], b[1]]))
-            .collect())
+        Ok(t.data().as_chunks::<2>().0.iter().map(|b| u16::from_le_bytes([b[0], b[1]])).collect())
     }
 
     fn f32(&self, name: &str, len: usize) -> Result<Vec<f32>> {
@@ -82,17 +76,12 @@ pub fn quantize_q8(w: &[u16], cols: usize) -> (Vec<i8>, Vec<f32>) {
     let mut values = Vec::with_capacity(w.len());
     let mut scales = Vec::with_capacity(w.len() / Q8_GROUP);
     for row in w.chunks_exact(cols) {
-        for group in row.chunks_exact(Q8_GROUP) {
-            let max = group
-                .iter()
-                .map(|&v| bf16_to_f32(v).abs())
-                .fold(0f32, f32::max);
+        for group in row.as_chunks::<Q8_GROUP>().0 {
+            let max = group.iter().map(|&v| bf16_to_f32(v).abs()).fold(0f32, f32::max);
             let scale = if max == 0.0 { 1.0 } else { max / 127.0 };
             scales.push(scale);
             values.extend(
-                group
-                    .iter()
-                    .map(|&v| (bf16_to_f32(v) / scale).round().clamp(-127.0, 127.0) as i8),
+                group.iter().map(|&v| (bf16_to_f32(v) / scale).round().clamp(-127.0, 127.0) as i8),
             );
         }
     }
@@ -113,18 +102,13 @@ impl Weights {
     pub fn load(spec: &Spec, path: &Path) -> Result<Self> {
         let file = std::fs::File::open(path).with_context(|| path.display().to_string())?;
         let map = unsafe { Mmap::map(&file)? };
-        let r = Reader {
-            st: SafeTensors::deserialize(&map)?,
-        };
+        let r = Reader { st: SafeTensors::deserialize(&map)? };
         let d = &spec.dims;
         let a = &spec.attention;
         let (h, q, kv, inter) = (d.hidden, spec.q_dim(), spec.kv_dim(), d.intermediate);
         let embed = r.bf16("model.embed_tokens.weight", &[d.vocab, h])?;
-        let lm_head = if d.tie_embeddings {
-            embed.clone()
-        } else {
-            r.bf16("lm_head.weight", &[d.vocab, h])?
-        };
+        let lm_head =
+            if d.tie_embeddings { embed.clone() } else { r.bf16("lm_head.weight", &[d.vocab, h])? };
         let mut layers = Vec::with_capacity(spec.layers.count);
         for i in 0..spec.layers.count {
             let p = format!("model.layers.{i}");

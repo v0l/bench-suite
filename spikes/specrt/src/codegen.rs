@@ -81,10 +81,8 @@ impl Module {
         ]
         .into_iter()
         .collect();
-        let source = format!("{}\n{}", render(OPS_TEMPLATE, &vars)?, render(MODEL_TEMPLATE, &vars)?);
-        Ok(Module {
-            source,
-            kernels: KERNELS.to_vec(),
-        })
+        let source =
+            format!("{}\n{}", render(OPS_TEMPLATE, &vars)?, render(MODEL_TEMPLATE, &vars)?);
+        Ok(Module { source, kernels: KERNELS.to_vec() })
     }
 }
