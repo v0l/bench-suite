@@ -213,3 +213,14 @@ keys and `pow` takes an nsec, so those are not open to this chat: launch the win
 user, or tell them the command to run themselves, for example `ngrind vanity --prefix alice \
 --count 3` or `ngrind pow --file note.json --difficulty 28 --nsec nsec1...`.\n\
 Reach for it when the user wants a vanity npub or a Nostr note with proof of work.";
+
+pub const CAMBENCH: &str = "\
+CAM toolpaths from a text file: every line of a `.gcam` file is one operation (face, pocket, \
+adaptive, profile, drill, chamfer, engrave, laser cut or raster), planned top to bottom and \
+simulated on a height-field stock. The suite starts its window, the `cambench-ui` binary, which \
+opens `.gcam` files.\n\
+`cambench check FILE.gcam` plans, simulates and verifies every post, and exits 1 on gouges, \
+remaining stock, rapids through material or holder hits. `cambench post FILE.gcam grbl OUT.nc` \
+writes G-code for grbl, linuxcnc, marlin (lasers) or fanuc, with G2 and G3 arcs. `info` gives the \
+time estimate and `view FILE.gcam OUT.svg` draws the toolpath.\n\
+Reach for it when the user wants G-code for a part, or to check a toolpath before it reaches a machine.";

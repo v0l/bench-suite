@@ -251,7 +251,7 @@ fn waveshark(tool: &Tool, target: Target, tag: &str, archive: Archive) -> Option
     Some(Package { name, archive })
 }
 
-pub const TOOLS: [Tool; 15] = [
+pub const TOOLS: [Tool; 16] = [
     Tool {
         name: "gcad",
         title: "gcad",
@@ -276,6 +276,31 @@ pub const TOOLS: [Tool; 15] = [
         opens: Opens::Files(&[".gcad", ".gasm", ".gsim"]),
         version_flag: true,
         skill: Some("gcad"),
+        asset: unversioned,
+    },
+    Tool {
+        name: "cambench",
+        title: "cambench",
+        tagline: "CAM toolpaths from a text file",
+        blurb: "A .gcam file of one operation per line becomes G-code for grbl, LinuxCNC, Marlin \
+                lasers or Fanuc, checked by a stock-removal simulation.",
+        guide: crate::guides::CAMBENCH,
+        features: &[
+            "Face, pocket, adaptive, profile with tabs, drill, chamfer, engrave and laser cut or raster",
+            "Posts for grbl, LinuxCNC, Marlin and Fanuc, with G2 and G3 arcs",
+            "Simulation that reports gouges, remaining stock, rapids through material and holder hits",
+            "Compares the cut with an STL or a gcad part",
+            "A viewer of the toolpath over the simulated stock",
+        ],
+        cli: &["check", "post", "view", "info", "materials", "posts", "camotics"],
+        cli_bin: "cambench",
+        group: Group::Design,
+        repo: "v0l/cambench",
+        bin: "cambench-ui",
+        verb: &[],
+        opens: Opens::Files(&[".gcam"]),
+        version_flag: false,
+        skill: Some("cambench"),
         asset: unversioned,
     },
     Tool {
@@ -862,7 +887,15 @@ mod tests {
     #[test]
     fn the_agent_tools_name_the_skill_their_release_ships() {
         let skills: Vec<_> = TOOLS.iter().filter_map(|t| t.skill.map(|s| (t.name, s))).collect();
-        assert_eq!(skills, [("gcad", "gcad"), ("agentee", "agentee"), ("calcbench", "calcbench")]);
+        assert_eq!(
+            skills,
+            [
+                ("gcad", "gcad"),
+                ("cambench", "cambench"),
+                ("agentee", "agentee"),
+                ("calcbench", "calcbench")
+            ]
+        );
     }
 
     #[test]

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="t d">
+  <title id="t">cambench</title>
+  <desc id="d">A toolpath spiralling into a pocket.</desc>
+  <rect width="64" height="64" rx="14" fill="#0B1014"/>
+  <path d="M12 14H52V50H12V22H44V42H20V30H36V36" fill="none" stroke="#FFB020" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

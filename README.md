@@ -20,6 +20,7 @@ releases, keeps it up to date, and starts it.
 | [ngrind](https://github.com/v0l/ngrind) | Vanity npubs and NIP-13 proof of work on the GPU or CPU |
 | [Inference Bench](https://github.com/v0l/inference-bench) | A local LLM server with its own specrt engine, config-driven JIT kernels and auto-updating model support, built to replace vLLM |
 | [calcbench](https://github.com/v0l/calcbench) | Units, constants and a formula solver for electronics, physics and maths, with a calculator |
+| [cambench](https://github.com/v0l/cambench) | CAM toolpaths from a text file: G-code for grbl, LinuxCNC, Marlin lasers and Fanuc, checked by simulation |
 
 Every tool keeps its own repo, version and release. The suite only reads them.
 

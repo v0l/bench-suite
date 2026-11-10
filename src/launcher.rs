@@ -182,6 +182,7 @@ fn icon(name: &str) -> &'static [u8] {
         "battery-control" => include_bytes!("../assets/icons/battery-control.svg"),
         "cycler" => include_bytes!("../assets/icons/cycler.svg"),
         "calcbench" => include_bytes!("../assets/icons/calcbench.svg"),
+        "cambench" => include_bytes!("../assets/icons/cambench.svg"),
         "inference-bench" => include_bytes!("../assets/icons/inference-bench.svg"),
         "testbench" => include_bytes!("../assets/icons/testbench.svg"),
         "waveshark" => include_bytes!("../assets/icons/waveshark.svg"),
