@@ -9,6 +9,7 @@ mod install;
 mod launcher;
 mod page;
 mod skills;
+mod source;
 mod system;
 mod view;
 

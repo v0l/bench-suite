@@ -1,7 +1,7 @@
 use crate::app::{Act, Filter, Hub, Slot, file_label};
 use crate::catalog::{Group, SUITE, Target, Tool};
-use crate::install;
 use crate::skills::{self, How, Placed};
+use crate::{install, source};
 use egui::text::{LayoutJob, TextFormat};
 use egui::{
     Color32, CornerRadius, FontId, Id, ImageSource, Pos2, Rect, Response, Sense, Stroke,
@@ -89,6 +89,7 @@ impl eframe::App for Hub {
         });
         self.toast(&ctx);
         self.confirm_removal(&ctx, &mut acts);
+        self.settings(&ctx);
         self.apply(&ctx, acts);
         egui_bench::agent::serve(self, &ctx);
         self.browse(&ctx);
@@ -129,6 +130,9 @@ impl Hub {
                 );
                 if r.clicked() {
                     acts.push(Act::Check);
+                }
+                if ui.add(Key::new("settings").outline(VALUE)).clicked() {
+                    acts.push(Act::Settings);
                 }
                 ui.add_space(8.0);
                 let (note, tint) = self.header_note();
@@ -785,9 +789,19 @@ impl Hub {
                 ui.set_width(380.0);
                 modal_title(ui, &format!("Uninstall {}?", tool.title));
                 note(ui, install::removal(tool), LEGEND);
+                if source::used(&install::home(tool)) > 0 {
+                    ui.add_space(8.0);
+                    ui.checkbox(
+                        &mut self.keep_on_remove,
+                        format!(
+                            "keep its source code ({})",
+                            megabytes(source::used(&install::home(tool)))
+                        ),
+                    );
+                }
                 footer(ui, |ui| {
                     if ui.add(Key::new("uninstall").solid(FAULT).min_width(120.0)).clicked() {
-                        acts.push(Act::Remove(i));
+                        acts.push(Act::Remove(i, self.keep_on_remove));
                         self.removing = None;
                     }
                     if ui.add(Key::new("keep it").outline(VALUE).min_width(120.0)).clicked() {
@@ -797,6 +811,36 @@ impl Hub {
             });
         if modal.should_close() {
             self.removing = None;
+        }
+    }
+
+    fn settings(&mut self, ctx: &egui::Context) {
+        if !self.settings_open {
+            return;
+        }
+        let mut close = false;
+        let modal = egui::Modal::new(Id::unique("settings"))
+            .backdrop_color(egui::Color32::from_black_alpha(150))
+            .show(ctx, |ui| {
+                ui.set_width(420.0);
+                modal_title(ui, "Settings");
+                ui.checkbox(&mut self.keep_source, "keep source with every install");
+                note(
+                    ui,
+                    "Downloads each tool's source code beside it, so you can read, change and \
+                     rebuild it without GitHub.",
+                    LEGEND,
+                );
+                ui.add_space(8.0);
+                reading(ui, "source on disk", megabytes(source::total_used()));
+                footer(ui, |ui| {
+                    if ui.add(Key::new("done").outline(VALUE).min_width(120.0)).clicked() {
+                        close = true;
+                    }
+                });
+            });
+        if close || modal.should_close() {
+            self.settings_open = false;
         }
     }
 

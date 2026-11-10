@@ -225,8 +225,11 @@ dependencies = [
  "egui",
  "egui_bench",
  "egui_extras",
+ "flate2",
  "image",
  "serde_json",
+ "sha2",
+ "tar",
  "winresource",
 ]
 

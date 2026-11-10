@@ -1,6 +1,6 @@
 use crate::catalog::{SUITE, TOOLS, Target, Tool, for_path, locate};
 use crate::skills::{self, Placed};
-use crate::{install, launcher};
+use crate::{install, launcher, source};
 use egui_bench::prelude::Browser;
 use egui_bench::update::{self, Install, Release, State, Updater};
 use std::path::{Path, PathBuf};
@@ -9,6 +9,7 @@ use std::time::Instant;
 
 const RECENT_MAX: usize = 6;
 const AGENT_OPEN_KEY: &str = "agent.open";
+const KEEP_SOURCE_KEY: &str = "source.keep";
 const TOOLS_ENV: &str = "BENCH_SUITE_TOOLS";
 
 pub struct Slot {
@@ -88,7 +89,11 @@ pub enum Act {
     Install(usize),
     InstallAll,
     Uninstall(usize),
-    Remove(usize),
+    Remove(usize, bool),
+    SourceOpen(usize),
+    SourceFetch(usize),
+    SourceVendor(usize),
+    Settings,
     Reveal(usize),
     RevealPath(PathBuf),
     Check,
@@ -110,6 +115,10 @@ pub struct Hub {
     pub search: String,
     pub checked: Option<Instant>,
     pub removing: Option<usize>,
+    pub keep_on_remove: bool,
+    pub keep_source: bool,
+    pub settings_open: bool,
+    pub work: (std::sync::mpsc::Sender<(String, bool)>, std::sync::mpsc::Receiver<(String, bool)>),
     pub agent: crate::agent::Page,
     pub reader: crate::docs::Reader,
 }
@@ -155,6 +164,13 @@ impl Hub {
             search: String::new(),
             checked: None,
             removing: None,
+            keep_on_remove: true,
+            keep_source: cc
+                .storage
+                .and_then(|s| s.get_string(KEEP_SOURCE_KEY))
+                .is_none_or(|v| v != "0"),
+            settings_open: false,
+            work: std::sync::mpsc::channel(),
             reader: crate::docs::Reader::default(),
             agent: crate::agent::new(
                 &cc.egui_ctx,
@@ -218,8 +234,15 @@ impl Hub {
         slot.settled = false;
         self.status = None;
         let version = release.version.clone();
+        let keep = self.keep_source;
+        let tx = self.work.0.clone();
+        let kept_release = release.clone();
         slot.updater.install(ctx, &release, &asset, move |file| {
-            install::place(tool, target, &package, &version, file)
+            install::place(tool, target, &package, &version, file)?;
+            if keep && let Some(warning) = install::keep_source(tool, &kept_release) {
+                let _ = tx.send((warning, true));
+            }
+            Ok(())
         });
         Ok(())
     }
@@ -232,12 +255,20 @@ impl Hub {
             self.say(&format!("{} has no {}", release.tag, package.name), true);
             return;
         };
-        self.suite.install(ctx, &release, &asset, move |file| install::place_self(target, file));
+        let keep = self.keep_source;
+        let tx = self.work.0.clone();
+        self.suite.install(ctx, &release.clone(), &asset, move |file| {
+            install::place_self(target, file)?;
+            if keep && let Some(warning) = install::keep_source(&SUITE, &release) {
+                let _ = tx.send((warning, true));
+            }
+            Ok(())
+        });
     }
 
-    fn uninstall(&mut self, ctx: &egui::Context, i: usize) {
+    fn uninstall(&mut self, ctx: &egui::Context, i: usize, keep: bool) {
         let tool = self.slots[i].tool;
-        match install::remove(tool) {
+        match install::remove(tool, keep) {
             Ok(()) => {
                 let versions = install::versions();
                 relocate(&mut self.slots[i], &versions, ctx);
@@ -245,6 +276,99 @@ impl Hub {
             }
             Err(e) => self.say(&format!("could not remove {}: {e}", tool.title), true),
         }
+    }
+
+    pub fn source_tag(&self, i: usize) -> Option<String> {
+        let tool = self.slots[i].tool;
+        let home = install::home(tool);
+        let current = self.slots[i].updater.current();
+        let by_version = current.and_then(|v| {
+            source::kept(&home, tool.name).into_iter().find(|k| k.tag.trim_start_matches('v') == v)
+        });
+        by_version.or_else(|| source::newest(&home, tool.name)).map(|k| k.tag)
+    }
+
+    fn background(
+        &self,
+        ctx: &egui::Context,
+        job: impl FnOnce() -> (String, bool) + Send + 'static,
+    ) {
+        let tx = self.work.0.clone();
+        let ctx = ctx.clone();
+        std::thread::spawn(move || {
+            let _ = tx.send(job());
+            ctx.request_repaint();
+        });
+    }
+
+    fn source_open(&mut self, i: usize) {
+        let tool = self.slots[i].tool;
+        let Some(tag) = self.source_tag(i) else {
+            return self.say("no source is kept yet, use re-download", true);
+        };
+        let home = install::home(tool);
+        match source::extract(&home, tool.name, &tag) {
+            Ok(dir) => {
+                let origin = source::find(&home, tool.name, &tag).map(|k| k.origin);
+                let mut said = format!("source is in {}", dir.display());
+                for w in source::warnings(&dir, origin.unwrap_or(source::Origin::Archive)) {
+                    said.push_str(&format!(". Warning: {w}"));
+                }
+                let notes = source::build_notes(&dir);
+                if let Some(first) = notes.lines().next() {
+                    said.push_str(&format!(". Build with: {first}"));
+                }
+                self.say(&said, false);
+                self.reveal(&dir);
+            }
+            Err(e) => self.say(&format!("could not extract the source: {e}"), true),
+        }
+    }
+
+    fn source_fetch(&mut self, i: usize, ctx: &egui::Context) {
+        let slot = &self.slots[i];
+        let tool = slot.tool;
+        let tag = match source::retry(&install::home(tool)) {
+            Some((tag, _)) => tag,
+            None => match slot.updater.current() {
+                Some(v) => format!("v{}", v.trim_start_matches('v')),
+                None => return self.say("install the tool first", true),
+            },
+        };
+        let release = [slot.updater.state().release().cloned()]
+            .into_iter()
+            .flatten()
+            .find(|r| r.tag == tag)
+            .unwrap_or_else(|| Release {
+                version: tag.trim_start_matches('v').to_string(),
+                tag: tag.clone(),
+                page: String::new(),
+                published: String::new(),
+                assets: Vec::new(),
+            });
+        self.say(&format!("downloading the source of {} {tag}", tool.title), false);
+        self.background(ctx, move || match install::keep_source(tool, &release) {
+            None => (format!("kept the source of {} {tag}", tool.title), false),
+            Some(e) => (e, true),
+        });
+    }
+
+    fn source_vendor(&mut self, i: usize, ctx: &egui::Context) {
+        let tool = self.slots[i].tool;
+        let Some(tag) = self.source_tag(i) else {
+            return self.say("no source is kept yet, use re-download", true);
+        };
+        self.say(
+            &format!("vendoring the dependencies of {}, this can take a while", tool.title),
+            false,
+        );
+        self.background(ctx, move || {
+            let home = install::home(tool);
+            match source::extract(&home, tool.name, &tag).and_then(|dir| source::vendor(&dir)) {
+                Ok(()) => (format!("{} builds offline from {}", tool.title, tag), false),
+                Err(e) => (format!("could not vendor {}: {e}", tool.title), true),
+            }
+        });
     }
 
     pub fn say(&mut self, msg: &str, fault: bool) {
@@ -302,6 +426,9 @@ impl Hub {
     }
 
     pub fn reap(&mut self, ctx: &egui::Context) {
+        while let Ok((msg, fault)) = self.work.1.try_recv() {
+            self.say(&msg, fault);
+        }
         let versions = install::versions();
         let mut said = None;
         let mut installed = Vec::new();
@@ -388,7 +515,11 @@ impl Hub {
                     }
                 }
                 Act::Uninstall(i) => self.removing = Some(i),
-                Act::Remove(i) => self.uninstall(ctx, i),
+                Act::Remove(i, keep) => self.uninstall(ctx, i, keep),
+                Act::SourceOpen(i) => self.source_open(i),
+                Act::SourceFetch(i) => self.source_fetch(i, ctx),
+                Act::SourceVendor(i) => self.source_vendor(i, ctx),
+                Act::Settings => self.settings_open = !self.settings_open,
                 Act::Reveal(i) => {
                     if let Some(exe) = self.slots[i].exe.clone() {
                         self.reveal(&exe);
@@ -435,6 +566,7 @@ impl Hub {
     }
 
     pub fn save_recent(&self, storage: &mut dyn eframe::Storage) {
+        storage.set_string(KEEP_SOURCE_KEY, if self.keep_source { "1" } else { "0" }.into());
         storage.set_string(AGENT_OPEN_KEY, if self.agent.open { "1" } else { "0" }.into());
         for slot in &self.slots {
             let list: Vec<String> =

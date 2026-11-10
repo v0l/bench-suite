@@ -24,6 +24,8 @@ a file before you edit it. Paths are relative to the workspace. To use a folder 
 what it printed. Run the check after every change and read the errors it prints. Fix them \
 yourself and run it again; do not hand the user a design you have not checked. Use the tool's \
 own docs subcommand when you need a reference the skill does not give.\n\
+- source unpacks the kept source code of an installed tool and tells you where it is and how to \
+build it, so a request to change a tool is done on its real code.\n\
 - launch opens the tool's window for the user on a file in the workspace. Do it when there is \
 something to look at, not as a step in the work.\n\
 - run_tool takes an argument list, not a command line, and only the subcommands listed below. For \
@@ -114,6 +116,19 @@ pub fn tools() -> Vec<Entry> {
         )
         .summarised_by(|args| text(args, "tool")),
         Entry::new(
+            "source",
+            "Unpack the kept source code of an installed tool and return the folder, its \
+             version and how to build it. Use it when the user wants to modify a tool. The \
+             folder is outside the workspace: call request_access on it for writing before \
+             you edit, and build with bash from a copy or in place once granted.",
+            object(json!({ "tool": tool }), &["tool"]),
+            |args, cx| async move {
+                tool_of(&args)?;
+                cx.ask("source", args).await.map(|v| v.to_string())
+            },
+        )
+        .summarised_by(|args| text(args, "tool")),
+        Entry::new(
             "launch",
             "Open a tool's window for the user, optionally on a file or folder it opens. \
              The path is inside the workspace and must be one the tool opens, which \
@@ -184,7 +199,7 @@ mod tests {
     #[test]
     fn every_suite_tool_has_a_name_a_sentence_and_an_object_schema() {
         let kit = super::super::Suite::default().toolkit().clone();
-        assert_eq!(kit.len(), 6);
+        assert_eq!(kit.len(), 7);
         assert!(kit.problems(&egui_bench::agent::local::NAMES).is_empty());
     }
 

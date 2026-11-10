@@ -76,7 +76,7 @@ pub fn place(
     }
     // a proper install replaces whatever the suite kept in its own folder before
     let _ = crate::launcher::unregister(tool);
-    let _ = fs::remove_dir_all(home(tool));
+    let _ = crate::source::discard_home(&home(tool), true);
     record(tool, version)?;
     let exe = installed(tool)
         .ok_or_else(|| format!("{} was installed but could not be found afterwards", tool.title))?;
@@ -159,7 +159,11 @@ pub fn removal(tool: &Tool) -> String {
     }
 }
 
-pub fn remove(tool: &Tool) -> Result<(), String> {
+pub fn keep_source(tool: &Tool, release: &egui_bench::update::Release) -> Option<String> {
+    crate::source::keep(&home(tool), tool, release, crate::source::GITHUB)
+}
+
+pub fn remove(tool: &Tool, keep_source: bool) -> Result<(), String> {
     if let Some(exe) = installed(tool) {
         if cfg!(windows) {
             system::msi_remove(&kept(tool))?;
@@ -173,10 +177,7 @@ pub fn remove(tool: &Tool) -> Result<(), String> {
     crate::skills::remove(tool)?;
     crate::launcher::unregister(tool)?;
     let _held = VERSIONS_LOCK.lock().unwrap_or_else(|e| e.into_inner());
-    let dir = home(tool);
-    if dir.exists() {
-        fs::remove_dir_all(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;
-    }
+    crate::source::discard_home(&home(tool), keep_source)?;
     let mut all = versions();
     all.retain(|(n, _)| n != tool.name);
     fs::write(root().join(VERSIONS_FILE), write_versions(&all)).map_err(|e| e.to_string())
@@ -268,7 +269,7 @@ mod tests {
                 assert!(p.path.join("SKILL.md").is_file(), "{}", p.path.display());
             }
             assert!(crate::skills::current(tool, &release.version), "{}", tool.name);
-            remove(tool).unwrap();
+            remove(tool, false).unwrap();
             assert!(
                 crate::skills::placed(tool).iter().all(|p| p.how == crate::skills::How::Theirs)
             );

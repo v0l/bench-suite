@@ -145,6 +145,24 @@ impl Hub {
                 self.removing = Some(i);
                 Ok(Handled::Later(Box::new(move |hub: &mut Hub| hub.removed(i))))
             }
+            "source" => {
+                let i = tool_index(self, &tool_arg(args)?)?;
+                let tool = self.slots[i].tool;
+                let tag = self
+                    .source_tag(i)
+                    .ok_or_else(|| format!("no source is kept for {}", tool.title))?;
+                let home = crate::install::home(tool);
+                let dir = crate::source::extract(&home, tool.name, &tag)?;
+                let origin = crate::source::find(&home, tool.name, &tag)
+                    .map(|k| k.origin)
+                    .unwrap_or(crate::source::Origin::Archive);
+                Ok(Handled::Now(Ok(json!({
+                    "folder": dir.display().to_string(),
+                    "version": tag,
+                    "build": crate::source::build_notes(&dir),
+                    "warnings": crate::source::warnings(&dir, origin),
+                }))))
+            }
             "launch" => {
                 let i = tool_index(self, &tool_arg(args)?)?;
                 let path = args.get("path").and_then(Value::as_str).map(PathBuf::from);

@@ -23,6 +23,7 @@ egui_bench = { version = "0.9.4", features = ["update", "agent", "sandbox"] }
 egui_extras = { version = "0.37", default-features = false, features = ["svg", "image"] }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 serde_json = "1"
+sha2 = "0.11"
 
 [target.'cfg(windows)'.build-dependencies]
 winresource = "0.1"
@@ -31,3 +32,6 @@ winresource = "0.1"
 opt-level = 3
 lto = "thin"
 
+[dev-dependencies]
+flate2 = "1"
+tar = "0.4"

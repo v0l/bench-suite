@@ -1,6 +1,7 @@
 use crate::app::{Act, Hub, Slot};
 use crate::catalog::{SUITE, Tool};
 use crate::docs::{Doc, Kind, Loaded, Open, Picture, Tab};
+use crate::source;
 use crate::view::{date, icon, megabytes, rule, skill_line, tidy};
 use egui::{Margin, RichText, Ui, pos2, vec2};
 use egui_bench::prelude::*;
@@ -247,6 +248,8 @@ impl Hub {
                     reading(ui, f.label, f.value.clone());
                 }
             });
+            ui.add_space(12.0);
+            self.source_section(ui, i, acts);
             if !recent.is_empty() {
                 ui.add_space(12.0);
                 section(ui, "recent", "click to open again", |ui| {
@@ -269,6 +272,41 @@ impl Hub {
                 });
             }
             ui.add_space(24.0);
+        });
+    }
+
+    fn source_section(&self, ui: &mut Ui, i: usize, acts: &mut Vec<Act>) {
+        let tool = self.slots[i].tool;
+        let home = crate::install::home(tool);
+        let kept = source::kept(&home, tool.name);
+        let tag = self.source_tag(i);
+        let held = tag.as_ref().and_then(|t| source::find(&home, tool.name, t));
+        let dir = tag.as_ref().map(|t| source::extracted(&home, t)).filter(|d| d.is_dir());
+        section(ui, "source", "the code this version was built from", |ui| {
+            for line in source_lines(&kept, held.as_ref(), dir.as_deref(), source::retry(&home)) {
+                reading(ui, line.label, line.value);
+            }
+            ui.add_space(6.0);
+            ui.horizontal_wrapped(|ui| {
+                if ui
+                    .add(Key::new("open source folder").outline(VALUE).enabled(held.is_some()))
+                    .clicked()
+                {
+                    acts.push(Act::SourceOpen(i));
+                }
+                if ui
+                    .add(Key::new("vendor dependencies").outline(VALUE).enabled(held.is_some()))
+                    .on_hover_text(
+                        "run cargo vendor so it builds with no network, can be hundreds of MB",
+                    )
+                    .clicked()
+                {
+                    acts.push(Act::SourceVendor(i));
+                }
+                if ui.add(Key::new("re-download").outline(VALUE)).clicked() {
+                    acts.push(Act::SourceFetch(i));
+                }
+            });
         });
     }
 
@@ -315,6 +353,47 @@ impl Hub {
     }
 }
 
+pub fn source_lines(
+    kept: &[source::Kept],
+    held: Option<&source::Kept>,
+    dir: Option<&std::path::Path>,
+    retry: Option<(String, String)>,
+) -> Vec<Fact> {
+    let mut out = Vec::new();
+    match held {
+        Some(k) => {
+            let from = match k.origin {
+                source::Origin::Release => "from the release, checksummed",
+                source::Origin::Archive => "GitHub's tag archive",
+            };
+            out.push(fact("kept", format!("{}, {} ({from})", k.tag, megabytes(k.bytes))));
+        }
+        None => out.push(fact("kept", "no source kept yet")),
+    }
+    if kept.len() > 1 {
+        let tags: Vec<&str> = kept.iter().map(|k| k.tag.as_str()).collect();
+        out.push(fact("versions", tags.join(", ")));
+    }
+    if let Some(dir) = dir {
+        out.push(fact("extracted", tidy(dir)));
+        let origin = held.map(|k| k.origin).unwrap_or(source::Origin::Archive);
+        for w in source::warnings(dir, origin) {
+            out.push(fact("warning", w));
+        }
+        let notes = source::build_notes(dir);
+        if let Some(first) = notes.lines().next() {
+            out.push(fact("build", first));
+        }
+    }
+    if let Some((tag, why)) = retry {
+        out.push(fact(
+            "warning",
+            format!("the source of {tag} could not be downloaded: {why}. Use re-download"),
+        ));
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -322,6 +401,21 @@ mod tests {
 
     fn tool(name: &str) -> &'static Tool {
         TOOLS.iter().find(|t| t.name == name).unwrap()
+    }
+
+    #[test]
+    fn the_source_section_shows_the_kept_version_size_and_a_failed_download() {
+        let k = source::Kept {
+            tag: "v1.0.0".into(),
+            file: "/x/gcad-v1.0.0.tar.gz".into(),
+            bytes: 5_000_000,
+            origin: source::Origin::Release,
+        };
+        let lines = source_lines(std::slice::from_ref(&k), Some(&k), None, None);
+        assert_eq!(lines[0].value, "v1.0.0, 5 MB (from the release, checksummed)");
+        let lines = source_lines(&[], None, None, Some(("v2".into(), "offline".into())));
+        assert_eq!(lines[0].value, "no source kept yet");
+        assert!(lines[1].value.contains("v2") && lines[1].value.contains("re-download"));
     }
 
     #[test]
