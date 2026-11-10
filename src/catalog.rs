@@ -604,18 +604,16 @@ pub const TOOLS: [Tool; 14] = [
     Tool {
         name: "inference-bench",
         title: "Inference Bench",
-        tagline: "Compare LLM inference backends",
-        blurb: "A local LLM app: browse and download models, chat, serve an OpenAI-compatible API, and \
-                benchmark llama.cpp, vLLM, transformers and the specrt runtime.",
+        tagline: "A local LLM server, built to replace vLLM",
+        blurb: "A local LLM server app like LM Studio. It runs models with its own specrt engine, \
+                builds its kernels from config at JIT time, and auto-updates model support.",
         guide: crate::guides::INFERENCE_BENCH,
         features: &[
-            "Chat, Models, Bench, Server and Settings tabs in the style of LM Studio",
-            "Runs one model across several backends and shows a model by backend matrix",
-            "Measures prefill and decode tokens per second, time to first token and peak memory",
-            "Talks to any OpenAI-compatible server: vLLM, llama.cpp, mistral.rs, Ollama, YALR",
-            "Runs transformers as the reference and the native specrt CUDA runtime",
-            "Reports the real error per cell, including an unsupported architecture",
-            "Checks logits against transformers, and keeps every run as JSON with charts",
+            "Local server with its own specrt engine, built to replace vLLM",
+            "Config-driven JIT kernels",
+            "Auto-updates model support as new models are added",
+            "Serves an OpenAI-compatible API",
+            "Chat, Models and Settings tabs in the style of LM Studio",
         ],
         cli: &["results"],
         cli_bin: "inference-bench",
