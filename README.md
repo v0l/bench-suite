@@ -19,6 +19,7 @@ releases, keeps it up to date, and starts it.
 | [coldbench](https://github.com/v0l/coldbench) | Bitcoin wallet for Jade, Coldcard and Trezor, laid out like Sparrow |
 | [ngrind](https://github.com/v0l/ngrind) | Vanity npubs and NIP-13 proof of work on the GPU or CPU |
 | [Inference Bench](https://github.com/v0l/inference-bench) | A local LLM server with its own specrt engine, config-driven JIT kernels and auto-updating model support, built to replace vLLM |
+| [calcbench](https://github.com/v0l/calcbench) | Units, constants and a formula solver for electronics, physics and maths, with a calculator |
 
 Every tool keeps its own repo, version and release. The suite only reads them.
 

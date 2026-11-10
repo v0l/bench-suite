@@ -251,7 +251,7 @@ fn waveshark(tool: &Tool, target: Target, tag: &str, archive: Archive) -> Option
     Some(Package { name, archive })
 }
 
-pub const TOOLS: [Tool; 14] = [
+pub const TOOLS: [Tool; 15] = [
     Tool {
         name: "gcad",
         title: "gcad",
@@ -627,6 +627,32 @@ pub const TOOLS: [Tool; 14] = [
         asset: tagged,
     },
     Tool {
+        name: "calcbench",
+        title: "Calcbench",
+        tagline: "Units, constants and formulas",
+        blurb: "Offline unit conversion, physical constants, a solver for electronics, physics \
+                and maths formulas, and a calculator with units.",
+        guide: crate::guides::CALCBENCH,
+        features: &[
+            "Converts units in typed expressions: 3 ft 2 in to cm, 60 mph to m/s, dBm to mW",
+            "Checks dimensions, so metres plus seconds is an error",
+            "Holds CODATA 2022 constants with uncertainty and source, plus materials and atmosphere tables",
+            "Solves 138 formulas for any one unknown: Ohm, dividers, filters, path loss, orbits, loans",
+            "Calculator with history, variables, complex numbers and plots with units on the axes",
+            "E-series, resistor colour code, capacitor code, bases and IEEE-754 tools",
+        ],
+        cli: &["formula", "const", "eseries", "divider", "colour", "cap", "base", "float", "bits", "stats"],
+        cli_bin: "calcbench",
+        group: Group::Design,
+        repo: "v0l/calcbench",
+        bin: "calcbench",
+        verb: &[],
+        opens: Opens::Nothing,
+        version_flag: true,
+        skill: Some("calcbench"),
+        asset: tagged,
+    },
+    Tool {
         name: "ngrind",
         title: "ngrind",
         tagline: "Vanity npubs and proof of work, on the GPU",
@@ -752,6 +778,10 @@ mod tests {
             "printfarm-aarch64-apple-darwin.tar.gz"
         );
         assert_eq!(
+            name("calcbench", Target::LinuxX64, "v0.1.0"),
+            "calcbench-v0.1.0-x86_64-unknown-linux-gnu.tar.gz"
+        );
+        assert_eq!(
             name("testbench", Target::LinuxX64, "v0.1.0"),
             "testbench-v0.1.0-x86_64-unknown-linux-gnu.tar.gz"
         );
@@ -832,7 +862,7 @@ mod tests {
     #[test]
     fn the_agent_tools_name_the_skill_their_release_ships() {
         let skills: Vec<_> = TOOLS.iter().filter_map(|t| t.skill.map(|s| (t.name, s))).collect();
-        assert_eq!(skills, [("gcad", "gcad"), ("agentee", "agentee")]);
+        assert_eq!(skills, [("gcad", "gcad"), ("agentee", "agentee"), ("calcbench", "calcbench")]);
     }
 
     #[test]

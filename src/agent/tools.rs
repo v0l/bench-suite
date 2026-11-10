@@ -237,7 +237,7 @@ mod tests {
         assert!(brief.contains("launch: opens no files, launch it bare."));
         assert!(brief.contains("run_tool subcommands: check, measure"));
         assert!(brief.contains("run_tool: not available."));
-        assert_eq!(brief.matches("skill: `").count(), 2);
+        assert_eq!(brief.matches("skill: `").count(), 3);
         assert!(brief.contains("No skills are installed."));
     }
 

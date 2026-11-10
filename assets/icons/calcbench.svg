@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <rect width="256" height="256" rx="40" fill="#15171a"/>
+  <rect x="40" y="36" width="176" height="52" rx="6" fill="#0d0f11" stroke="#2a2f36" stroke-width="3"/>
+  <text x="204" y="76" text-anchor="end" font-family="monospace" font-weight="700" font-size="38" fill="#4fd1e8">96.52</text>
+  <g fill="#23272d" stroke="#2a2f36" stroke-width="3">
+    <rect x="40" y="108" width="48" height="40" rx="6"/>
+    <rect x="104" y="108" width="48" height="40" rx="6"/>
+    <rect x="168" y="108" width="48" height="40" rx="6"/>
+    <rect x="40" y="164" width="48" height="40" rx="6"/>
+    <rect x="104" y="164" width="48" height="40" rx="6"/>
+  </g>
+  <rect x="168" y="164" width="48" height="40" rx="6" fill="#f5a53a"/>
+  <g stroke="#e8e8e8" stroke-width="5" stroke-linecap="round" fill="none">
+    <path d="M52 128h24M64 116v24"/>
+    <path d="M116 128h24"/>
+    <path d="M180 120l24 16M204 120l-24 16"/>
+    <path d="M52 184h24"/>
+    <path d="M116 176l24 16M140 176l-24 16" opacity="0"/>
+  </g>
+  <text x="128" y="196" text-anchor="middle" font-family="monospace" font-weight="700" font-size="26" fill="#e8e8e8">π</text>
+  <path d="M180 184h24M192 176v0" stroke="#15171a" stroke-width="5" stroke-linecap="round"/>
+</svg>

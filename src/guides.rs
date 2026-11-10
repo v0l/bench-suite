@@ -187,6 +187,19 @@ load models and use the GPU, so launch the window or tell the user the command, 
 Reach for it when the user wants to know which inference engine is fastest for a model, or whether \
 a backend supports it.";
 
+pub const CALCBENCH: &str = "\
+Offline units, constants and formulas. `calcbench \"60 mph to m/s\"` evaluates an expression with units \
+(SI prefixes, imperial, offset temperatures, fuel economy, dBm and the other dB scales, complex \
+numbers) and a dimension mistake is an error with a non-zero exit.\n\
+`calcbench const c` prints a constant with value, uncertainty and source (CODATA 2022, plus maths, \
+earth, astronomy, atmosphere and materials). `calcbench formula` lists the 138 formulas; `calcbench \
+formula ohm V=12 R=470` solves for the variable left out, and inputs may carry units. Also \
+`eseries`, `divider`, `colour`, `cap`, `base`, `float`, `bits` and `stats`. Add `--json` to formula and \
+const for machine output.\n\
+Everything is a plain command and safe to run. The window opens when no arguments are given.\n\
+Reach for it when the user needs a unit conversion, a constant, a resistor or capacitor value, or a \
+formula solved, instead of working it out by hand.";
+
 pub const NGRIND: &str = "\
 Mines vanity npubs and NIP-13 proof of work events for Nostr, on the GPU or the CPU. Backends are \
 cuda (NVIDIA, by a wide margin the fastest), wgpu (any GPU with Vulkan, Metal or DirectX 12) and \
