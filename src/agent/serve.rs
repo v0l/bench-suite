@@ -1,6 +1,7 @@
 use crate::app::Hub;
 use crate::catalog::Tool;
-use egui_bench::agent::{Agent, Handled, Host, Reply};
+use agent_core::Reply;
+use agent_ui::{Agent, Handled, Host};
 use egui_bench::update::{Install, State};
 use serde_json::{Value, json};
 use std::path::PathBuf;

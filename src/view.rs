@@ -93,7 +93,7 @@ impl eframe::App for Hub {
         self.confirm_removal(&ctx, &mut acts);
         self.settings(&ctx);
         self.apply(&ctx, acts);
-        egui_bench::agent::serve(self, &ctx);
+        agent_ui::serve(self, &ctx);
         self.browse(&ctx);
         self.drop_overlay(&ctx);
         let live = self.slots.iter().any(|s| !s.running.is_empty() || s.updater.busy())

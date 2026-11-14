@@ -19,7 +19,9 @@ eframe = { version = "0.37", default-features = false, features = [
     "links",
 ] }
 egui = "0.37"
-egui_bench = { version = "0.9.4", features = ["update", "agent", "sandbox"] }
+egui_bench = { version = "0.9.8", features = ["update"] }
+agent-core = { git = "https://github.com/v0l/agentbench", features = ["sandbox"] }
+agent-ui = { git = "https://github.com/v0l/agentbench", features = ["sandbox"] }
 egui_extras = { version = "0.37", default-features = false, features = ["svg", "image"] }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 serde_json = "1"

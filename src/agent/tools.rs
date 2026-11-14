@@ -1,7 +1,7 @@
 use crate::catalog::{TOOLS, Tool};
-use egui_bench::agent::skillset::{Skill, listing};
-use egui_bench::agent::toolkit::Tool as Entry;
-use egui_bench::agent::tools::{object, string};
+use agent_core::skillset::{Skill, listing};
+use agent_core::toolkit::Tool as Entry;
+use agent_core::tools::{object, string};
 use serde_json::{Value, json};
 use std::path::Path;
 
@@ -194,13 +194,13 @@ fn run_tool_summary(args: &Value) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use egui_bench::agent::{Backend, tools::offered};
+    use agent_core::{Backend, tools::offered};
 
     #[test]
     fn every_suite_tool_has_a_name_a_sentence_and_an_object_schema() {
         let kit = super::super::Suite::default().toolkit().clone();
         assert_eq!(kit.len(), 7);
-        assert!(kit.problems(&egui_bench::agent::local::NAMES).is_empty());
+        assert!(kit.problems(&agent_core::local::NAMES).is_empty());
     }
 
     #[test]

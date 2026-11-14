@@ -20,6 +20,43 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
+name = "agent-core"
+version = "0.1.0"
+source = "git+https://github.com/v0l/agentbench#ed1c84e136b39f3086f0747ea8d737035ae21a15"
+dependencies = [
+ "async-trait",
+ "base64 0.23.1",
+ "dirs",
+ "futures-util",
+ "ignore",
+ "nono",
+ "reqwest",
+ "rustls",
+ "scraper",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-util",
+ "url",
+ "webpki-roots",
+]
+
+[[package]]
+name = "agent-ui"
+version = "0.1.0"
+source = "git+https://github.com/v0l/agentbench#ed1c84e136b39f3086f0747ea8d737035ae21a15"
+dependencies = [
+ "agent-core",
+ "dirs",
+ "egui",
+ "egui_bench",
+ "futures-util",
+ "reqwest",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "ahash"
 version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -220,6 +257,8 @@ checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
 name = "bench-suite"
 version = "0.8.5"
 dependencies = [
+ "agent-core",
+ "agent-ui",
  "dirs",
  "eframe",
  "egui",
@@ -1079,33 +1118,19 @@ dependencies = [
 
 [[package]]
 name = "egui_bench"
-version = "0.9.4"
+version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4522405040393cfbc2addb9996dead2b81701e8ef89c1e95f86594ac17551ea7"
+checksum = "0cad3efe50f2be0ee8bf7bf94da7581654b8ad67650052750627d5af6a8f7e93"
 dependencies = [
- "async-trait",
- "base64 0.23.1",
- "dirs",
  "egui",
  "flate2",
- "futures-util",
  "gix",
- "ignore",
- "nono",
  "pulldown-cmark",
- "reqwest",
- "rustls",
- "scraper",
- "serde",
  "serde_json",
  "sha2",
  "tar",
- "tokio",
- "tokio-util",
  "ureq",
- "url",
  "web-time",
- "webpki-roots",
  "zip",
 ]
 

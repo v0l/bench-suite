@@ -5,7 +5,7 @@ mod tools;
 
 use crate::app::Hub;
 pub use backend::Suite;
-use egui_bench::agent::Agent;
+use agent_ui::Agent;
 use std::sync::Arc;
 
 pub type Page = Agent<Hub>;
@@ -15,5 +15,5 @@ pub fn new(ctx: &egui::Context, open: bool) -> Page {
 }
 
 pub fn run_helper() -> Option<i32> {
-    egui_bench::agent::sandbox::run_helper()
+    agent_core::sandbox::run_helper()
 }

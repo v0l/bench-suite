@@ -1,8 +1,8 @@
 use super::tools;
 use crate::catalog::TOOLS;
-use egui_bench::agent::skillset::Skill;
-use egui_bench::agent::toolkit::Toolkit;
-use egui_bench::agent::{Backend, Cx, Welcome, async_trait};
+use agent_core::skillset::Skill;
+use agent_core::toolkit::Toolkit;
+use agent_core::{Backend, Cx, Welcome, async_trait};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 

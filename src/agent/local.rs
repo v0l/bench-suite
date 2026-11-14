@@ -1,9 +1,9 @@
 use super::tools::{text, tool_of};
 use crate::catalog::{TOOLS, Target, Tool};
-use egui_bench::agent::Cx;
-use egui_bench::agent::grants::Access;
-use egui_bench::agent::spawn::{self, Confine};
-use egui_bench::agent::workspace::Workspace;
+use agent_core::Cx;
+use agent_core::grants::Access;
+use agent_core::spawn::{self, Confine};
+use agent_core::workspace::Workspace;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
