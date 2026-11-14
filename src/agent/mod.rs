@@ -4,8 +4,8 @@ mod serve;
 mod tools;
 
 use crate::app::Hub;
-pub use backend::Suite;
 use agent_ui::Agent;
+pub use backend::Suite;
 use std::sync::Arc;
 
 pub type Page = Agent<Hub>;

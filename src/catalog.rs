@@ -666,7 +666,10 @@ pub const TOOLS: [Tool; 16] = [
             "Calculator with history, variables, complex numbers and plots with units on the axes",
             "E-series, resistor colour code, capacitor code, bases and IEEE-754 tools",
         ],
-        cli: &["formula", "const", "eseries", "divider", "colour", "cap", "base", "float", "bits", "stats"],
+        cli: &[
+            "formula", "const", "eseries", "divider", "colour", "cap", "base", "float", "bits",
+            "stats",
+        ],
         cli_bin: "calcbench",
         group: Group::Design,
         repo: "v0l/calcbench",
