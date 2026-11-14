@@ -12,6 +12,9 @@ const AGENT_OPEN_KEY: &str = "agent.open";
 const KEEP_SOURCE_KEY: &str = "source.keep";
 const TOOLS_ENV: &str = "BENCH_SUITE_TOOLS";
 
+type WorkChannel =
+    (std::sync::mpsc::Sender<(String, bool)>, std::sync::mpsc::Receiver<(String, bool)>);
+
 pub struct Slot {
     pub tool: &'static Tool,
     pub exe: Option<PathBuf>,
@@ -118,7 +121,7 @@ pub struct Hub {
     pub keep_on_remove: bool,
     pub keep_source: bool,
     pub settings_open: bool,
-    pub work: (std::sync::mpsc::Sender<(String, bool)>, std::sync::mpsc::Receiver<(String, bool)>),
+    pub work: WorkChannel,
     pub agent: crate::agent::Page,
     pub reader: crate::docs::Reader,
 }

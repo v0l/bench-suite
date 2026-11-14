@@ -187,10 +187,10 @@ fn fetch_checked(
 ) -> Result<Kept, String> {
     let got = download(asset, part, |_, _| {})?;
     let sum = sha256_file(&got)?;
-    if let Some(want) = published_sum(release, &asset.name)? {
-        if !want.eq_ignore_ascii_case(&sum) {
-            return Err(format!("{} does not match its published sha256", asset.name));
-        }
+    if let Some(want) = published_sum(release, &asset.name)?
+        && !want.eq_ignore_ascii_case(&sum)
+    {
+        return Err(format!("{} does not match its published sha256", asset.name));
     }
     let file = file_name(name, &release.tag);
     let dest = dir.join(&file);
