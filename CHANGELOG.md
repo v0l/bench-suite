@@ -6,6 +6,8 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-14
+
 ### Added
 - Inference Bench in the catalog.
 - Calcbench in the catalog.
@@ -13,6 +15,7 @@ All notable changes to bench suite are listed here. The format follows
 - Every install and update keeps the source tarball of that release in `source/` beside the tool, with a `SHA256SUMS`. Each tool page has a source section to open the extracted source, vendor its dependencies for offline builds, and download it again. Settings can turn this off and shows the disk used. Uninstalling asks whether to keep the source.
 - The agent has a `source` tool that unpacks a tool's source and says how to build it.
 - The release workflow uploads `bench-suite-<tag>-source.tar.gz` with its sha256.
+- The agent now comes from the agentbench crates, and egui_bench is 0.10.0.
 
 ### Fixed
 - The dismiss button on the notification no longer wraps its text onto several lines.
