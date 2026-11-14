@@ -20,8 +20,8 @@ eframe = { version = "0.37", default-features = false, features = [
 ] }
 egui = "0.37"
 egui_bench = { version = "0.10.0", features = ["update", "markdown"] }
-agent-core = { git = "https://github.com/v0l/agentbench", rev = "ed1c84e136b39f3086f0747ea8d737035ae21a15", features = ["sandbox"] }
-agent-ui = { git = "https://github.com/v0l/agentbench", rev = "ed1c84e136b39f3086f0747ea8d737035ae21a15", features = ["sandbox"] }
+agent-core = { git = "https://github.com/v0l/agentbench", rev = "887da2d11ede7b9b3c2755e390c2934fdb3f8924", features = ["sandbox"] }
+agent-ui = { git = "https://github.com/v0l/agentbench", rev = "887da2d11ede7b9b3c2755e390c2934fdb3f8924", features = ["sandbox"] }
 egui_extras = { version = "0.37", default-features = false, features = ["svg", "image"] }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 serde_json = "1"
