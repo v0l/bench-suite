@@ -6,7 +6,7 @@ All notable changes to bench suite are listed here. The format follows
 
 ## [Unreleased]
 
-## [0.9.0] - 2026-11-14
+## [0.9.1] - 2026-11-14
 
 ### Added
 - Inference Bench in the catalog.
