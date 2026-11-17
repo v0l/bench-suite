@@ -25,6 +25,10 @@ mod tests {
     use egui_kittest::Harness;
 
     fn page() -> Harness<'static, Page> {
+        page_at([900.0, 700.0])
+    }
+
+    fn page_at(size: [f32; 2]) -> Harness<'static, Page> {
         let ctx = egui::Context::default();
         let mut agent = Agent::new(&ctx, Arc::new(Suite::default()), true);
         agent.chat.config.model = "qwen3".into();
@@ -43,7 +47,7 @@ mod tests {
         if let egui_wgpu::WgpuSetup::CreateNew(new) = &mut setup {
             new.instance_descriptor.flags = egui_wgpu::wgpu::InstanceFlags::empty();
         }
-        let mut h = Harness::builder().with_size([900.0, 700.0]).wgpu_setup(setup).build_ui_state(
+        let mut h = Harness::builder().with_size(size).wgpu_setup(setup).build_ui_state(
             |ui, agent: &mut Page| {
                 egui_bench::theme::install(ui.ctx());
                 agent.show(ui);
@@ -84,8 +88,10 @@ mod tests {
 
     #[test]
     fn the_chat_renders_an_image() {
-        let mut h = page();
-        let image = h.render().expect("render");
-        image.save(std::env::temp_dir().join("chat-after.png")).expect("save");
+        for width in [1280.0, 900.0, 420.0] {
+            let mut h = page_at([width, 700.0]);
+            let image = h.render().expect("render");
+            image.save(std::env::temp_dir().join(format!("chat-after-{width}.png"))).expect("save");
+        }
     }
 }
