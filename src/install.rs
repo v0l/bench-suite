@@ -277,6 +277,29 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "installs the tool named in BENCH_TOOL the way the launcher does"]
+    fn the_named_tool_installs_the_way_the_launcher_does() {
+        let target = Target::host().unwrap();
+        let name = std::env::var("BENCH_TOOL").unwrap();
+        let tool = TOOLS.iter().find(|t| t.name == name).unwrap();
+        let release = latest(tool.repo, Some(&cache())).unwrap();
+        let (package, asset) = tool
+            .packages(target, &release.tag)
+            .into_iter()
+            .find_map(|p| release.asset(&p.name).cloned().map(|a| (p, a)))
+            .expect("no build for this machine");
+        println!("{} {} via {}", tool.name, release.version, package.name);
+        let scratch = std::env::temp_dir().join(format!("bench-suite-test-{}", tool.name));
+        let file = download(&asset, &scratch, |_, _| {}).unwrap();
+        place(tool, target, &package, &release.version, &file).unwrap();
+        let warning = keep_source(tool, &release);
+        println!("source warning: {warning:?}");
+        let _ = fs::remove_dir_all(&scratch);
+        println!("exe: {:?}", installed(tool).or_else(|| portable(tool)));
+        println!("home: {}", home(tool).display());
+    }
+
+    #[test]
     #[ignore = "downloads every tool's latest release"]
     fn every_tool_installs_from_its_latest_release() {
         let target = Target::host().unwrap();
