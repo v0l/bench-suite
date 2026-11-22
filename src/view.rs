@@ -1160,6 +1160,43 @@ mod tests {
         out.to_lowercase()
     }
 
+    fn header_labels(h: &Harness<'_, Hub>) -> Vec<(String, Rect, usize)> {
+        fn walk(s: &egui::Shape, out: &mut Vec<(String, Rect, usize)>) {
+            match s {
+                egui::Shape::Text(t) => {
+                    let rect = t.galley.rect.translate(t.pos.to_vec2());
+                    out.push((t.galley.text().to_lowercase(), rect, t.galley.rows.len()));
+                }
+                egui::Shape::Vec(v) => v.iter().for_each(|s| walk(s, out)),
+                _ => {}
+            }
+        }
+        let mut all = Vec::new();
+        for c in &h.output().shapes {
+            walk(&c.shape, &mut all);
+        }
+        let names = ["tools", "agent", "settings", "update", "check for updates"];
+        all.into_iter()
+            .filter(|(t, r, _)| r.top() < 120.0 && (t.starts_with("bench suite") || names.contains(&t.as_str())))
+            .collect()
+    }
+
+    fn assert_header_fits(h: &Harness<'_, Hub>, size: [f32; 2]) {
+        let screen = Rect::from_min_size(Pos2::ZERO, vec2(size[0], size[1]));
+        let labels = header_labels(h);
+        assert!(labels.len() >= 5, "{size:?}: header labels {labels:?}");
+        for (i, (text, rect, rows)) in labels.iter().enumerate() {
+            assert_eq!(*rows, 1, "{size:?}: {text:?} wraps onto {rows} rows");
+            assert!(screen.contains_rect(*rect), "{size:?}: {text:?} leaves the screen {rect:?}");
+            for (other, other_rect, _) in &labels[i + 1..] {
+                assert!(
+                    !rect.intersects(*other_rect),
+                    "{size:?}: {text:?} {rect:?} overlaps {other:?} {other_rect:?}"
+                );
+            }
+        }
+    }
+
     fn render(hub: Hub, size: [f32; 2]) -> Harness<'static, Hub> {
         let mut setup = egui_kittest::wgpu::default_wgpu_setup();
         if let egui_wgpu::WgpuSetup::CreateNew(new) = &mut setup {
@@ -1184,17 +1221,21 @@ mod tests {
         let text = painted(&idle);
         assert!(text.contains("install") && !text.contains("retry"), "{text}");
 
-        for size in [[1280.0, 800.0], [390.0, 844.0]] {
+        for size in [[1280.0, 800.0], [390.0, 844.0], [412.0, 900.0]] {
             let failing = hub();
             fail_the_install(&failing, &url);
             let mut failed = render(failing, size);
             let text = painted(&failed);
             assert!(text.contains("retry"), "{size:?}: {text}");
             assert!(text.contains("503"), "{size:?}: {text}");
-            assert!(
-                text.lines().all(|l| l.trim().len() != 1 || !l.trim().chars().all(char::is_alphabetic)),
-                "{size:?}: single letter lines: {text}"
-            );
+            assert_header_fits(&failed, size);
+            let labels = header_labels(&failed);
+            let has = |name: &str| labels.iter().any(|(t, _, _)| t.starts_with(name));
+            if size[0] > 1000.0 {
+                assert!(has("check for updates"), "{size:?}: {labels:?}");
+            } else {
+                assert!(has("update") && !has("check for updates"), "{size:?}: {labels:?}");
+            }
             let image = failed.render().unwrap();
             image.save(format!("/tmp/retry-{}x{}.png", size[0], size[1])).unwrap();
         }
