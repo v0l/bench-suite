@@ -592,7 +592,12 @@ impl Hub {
                 };
                 return note(what, LEGEND);
             }
-            Install::Failed(e) => return note(e.clone(), FAULT),
+            Install::Failed(e) => {
+                note(e.clone(), FAULT);
+                ui.interact(row, Id::unique(("failed", slot.tool.name)), Sense::hover())
+                    .on_hover_text(e);
+                return;
+            }
             Install::Done(msg) if slot.exe.is_none() => return note(msg.clone(), OK),
             _ => {}
         }
@@ -1025,6 +1030,152 @@ pub(crate) fn tidy(path: &Path) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use egui_bench::update::{Asset, Updater, parse};
+    use egui_kittest::Harness;
+    use egui_kittest::kittest::Queryable;
+
+    fn hub() -> Hub {
+        let ctx = egui::Context::default();
+        Hub {
+            slots: crate::catalog::TOOLS
+                .iter()
+                .map(|tool| Slot {
+                    tool,
+                    exe: None,
+                    managed: false,
+                    updater: Updater::new(tool.repo, None),
+                    settled: true,
+                    running: Vec::new(),
+                    recent: Vec::new(),
+                    skills: Ok(Vec::new()),
+                })
+                .collect(),
+            suite: Updater::new(SUITE.repo, Some("0.0.1".into())),
+            target: Some(Target::LinuxX64),
+            picking: None,
+            status: None,
+            filter: Filter::All,
+            search: "battery".into(),
+            checked: None,
+            removing: None,
+            keep_on_remove: true,
+            keep_source: false,
+            settings_open: false,
+            work: std::sync::mpsc::channel(),
+            agent: crate::agent::new(&ctx, false),
+            reader: crate::docs::Reader::default(),
+        }
+    }
+
+    fn counting_server() -> (String, std::sync::Arc<std::sync::atomic::AtomicUsize>) {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let hits = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let seen = hits.clone();
+        std::thread::spawn(move || {
+            for mut stream in listener.incoming().flatten() {
+                let mut buf = [0u8; 2048];
+                let _ = stream.read(&mut buf);
+                seen.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                let _ = stream.write_all(
+                    b"HTTP/1.1 503 Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+                );
+            }
+        });
+        (format!("http://{addr}/tool"), hits)
+    }
+
+    fn settle(up: &Updater) {
+        let started = Instant::now();
+        while up.install_state().busy() && started.elapsed() < Duration::from_secs(10) {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+
+    fn offered(hub: &Hub, url: &str) {
+        let slot = &hub.slots[hub_index(hub)];
+        let tag = "v9.9.9";
+        let package = slot.tool.packages(Target::LinuxX64, tag).remove(0);
+        let mut release = parse(&format!(r#"{{"tag_name":"{tag}"}}"#)).unwrap();
+        release.assets.push(Asset { name: package.name, url: url.into(), bytes: 10, digest: None });
+        slot.updater.set_state(State::Newer(release));
+    }
+
+    fn fail_the_install(hub: &Hub, url: &str) {
+        offered(hub, url);
+        let slot = &hub.slots[hub_index(hub)];
+        let (release, _, asset) = slot.choice(Some(Target::LinuxX64)).unwrap();
+        slot.updater.install(&egui::Context::default(), &release, &asset, |_| Ok(()));
+        settle(&slot.updater);
+        assert!(matches!(slot.updater.install_state(), Install::Failed(_)));
+    }
+
+    fn hub_index(hub: &Hub) -> usize {
+        hub.slots.iter().position(|s| s.tool.name == "battery-control").unwrap()
+    }
+
+    fn painted(h: &Harness<'_, Hub>) -> String {
+        fn walk(s: &egui::Shape, out: &mut String) {
+            match s {
+                egui::Shape::Text(t) => {
+                    out.push_str(t.galley.text());
+                    out.push('\n');
+                }
+                egui::Shape::Vec(v) => v.iter().for_each(|s| walk(s, out)),
+                _ => {}
+            }
+        }
+        let mut out = String::new();
+        for c in &h.output().shapes {
+            walk(&c.shape, &mut out);
+        }
+        out.to_lowercase()
+    }
+
+    fn render(hub: Hub, size: [f32; 2]) -> Harness<'static, Hub> {
+        let mut setup = egui_kittest::wgpu::default_wgpu_setup();
+        if let egui_wgpu::WgpuSetup::CreateNew(new) = &mut setup {
+            new.instance_descriptor.flags = egui_wgpu::wgpu::InstanceFlags::empty();
+        }
+        let mut h = Harness::builder().with_size(size).wgpu_setup(setup).build_ui_state(
+            |ui, hub: &mut Hub| {
+                egui_bench::theme::install(ui.ctx());
+                egui_extras::install_image_loaders(ui.ctx());
+                eframe::App::ui(hub, ui, &mut eframe::Frame::_new_kittest());
+            },
+            hub,
+        );
+        h.run_steps(4);
+        h
+    }
+
+    #[test]
+    fn a_failed_install_offers_retry_and_clicking_it_installs_again() {
+        let (url, hits) = counting_server();
+        let fresh = hub();
+        offered(&fresh, &url);
+        let idle = render(fresh, [1280.0, 800.0]);
+        let text = painted(&idle);
+        assert!(text.contains("install") && !text.contains("retry"), "{text}");
+
+        for size in [[1280.0, 800.0], [390.0, 844.0]] {
+            let failing = hub();
+            fail_the_install(&failing, &url);
+            let before = hits.load(std::sync::atomic::Ordering::SeqCst);
+            let mut failed = render(failing, size);
+            let text = painted(&failed);
+            assert!(text.contains("retry"), "{size:?}: {text}");
+            assert!(text.contains("503"), "{size:?}: {text}");
+            let image = failed.render().unwrap();
+            image.save(format!("/tmp/retry-{}x{}.png", size[0], size[1])).unwrap();
+            failed.get_by_label("retry").click();
+            failed.run_steps(4);
+            settle(&failed.state().slots[hub_index(failed.state())].updater);
+            failed.run_steps(2);
+            assert_eq!(hits.load(std::sync::atomic::Ordering::SeqCst), before + 1, "{size:?}");
+        }
+    }
 
     #[test]
     fn a_release_date_reads_as_a_day() {
