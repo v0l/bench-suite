@@ -494,9 +494,16 @@ impl Hub {
         acts: &mut Vec<Act>,
     ) {
         let slot = &self.slots[i];
+        let failed = matches!(slot.updater.install_state(), Install::Failed(_));
         let secondary = match (&slot.exe, release) {
             (Some(_), Some(r)) if matches!(state, State::Newer(_)) && installable => {
-                let label = if slot.managed && current.is_some() { "update" } else { "install" };
+                let label = if failed {
+                    "retry"
+                } else if slot.managed && current.is_some() {
+                    "update"
+                } else {
+                    "install"
+                };
                 let hover = if slot.managed {
                     format!("download and install {}", r.version)
                 } else {
@@ -534,7 +541,7 @@ impl Hub {
                 }
             }
             None => {
-                if Key::new("install")
+                if Key::new(if failed { "retry" } else { "install" })
                     .solid(READOUT)
                     .enabled(installable)
                     .id_salt(("install", i))

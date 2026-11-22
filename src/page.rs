@@ -168,9 +168,10 @@ impl Hub {
     fn page_primary(&self, ui: &mut Ui, i: usize, acts: &mut Vec<Act>) {
         let slot = &self.slots[i];
         let installable = slot.installable(self.target).is_some();
+        let failed = matches!(slot.updater.install_state(), egui_bench::update::Install::Failed(_));
         match (&slot.exe, slot.wants_install(self.target)) {
             (Some(_), true) if installable => {
-                if ui.add(Key::new("update").solid(READOUT)).clicked() {
+                if ui.add(Key::new(if failed { "retry" } else { "update" }).solid(READOUT)).clicked() {
                     acts.push(Act::Install(i));
                 }
                 ui.add_space(8.0);
@@ -178,7 +179,8 @@ impl Hub {
             }
             (Some(_), _) => self.launch_key(ui, i, acts),
             (None, _) => {
-                if ui.add(Key::new("install").solid(READOUT).enabled(installable)).clicked() {
+                let key = Key::new(if failed { "retry" } else { "install" });
+                if ui.add(key.solid(READOUT).enabled(installable)).clicked() {
                     acts.push(Act::Install(i));
                 }
             }
