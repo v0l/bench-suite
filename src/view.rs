@@ -113,6 +113,10 @@ impl eframe::App for Hub {
 impl Hub {
     fn header(&mut self, ui: &mut Ui, acts: &mut Vec<Act>) {
         let checking = self.checking();
+        if ui.available_width() < 640.0 {
+            self.narrow_header(ui, acts, checking);
+            return;
+        }
         ui.horizontal(|ui| {
             ui.add(egui::Image::new(icon(&SUITE)).fit_to_exact_size(Vec2::splat(26.0)));
             ui.add_space(4.0);
@@ -157,6 +161,39 @@ impl Hub {
                 });
             });
         });
+    }
+
+    fn narrow_header(&mut self, ui: &mut Ui, acts: &mut Vec<Act>, checking: bool) {
+        ui.horizontal(|ui| {
+            ui.add(egui::Image::new(icon(&SUITE)).fit_to_exact_size(Vec2::splat(26.0)));
+            ui.add_space(4.0);
+            let mut job = LayoutJob::default();
+            job.append("BENCH SUITE", 0.0, tracked(legend_font(16.0), VALUE, 2.0));
+            job.append(env!("CARGO_PKG_VERSION"), 10.0, face(figure(12.0), LEGEND));
+            ui.label(job);
+        });
+        ui.add_space(6.0);
+        ui.horizontal(|ui| {
+            self.page_tabs(ui);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let label = if checking { "checking" } else { "update" };
+                if ui.add(Key::new(label).outline(VALUE).enabled(!checking)).clicked() {
+                    acts.push(Act::Check);
+                }
+                if ui.add(Key::new("settings").outline(VALUE)).clicked() {
+                    acts.push(Act::Settings);
+                }
+            });
+        });
+        if !self.agent.open {
+            ui.add_space(6.0);
+            let r = egui_bench::form::field(ui, &mut self.search, "search tools");
+            let id = r.id;
+            ui.ctx().data_mut(|d| d.insert_temp(search_id(), id));
+            if r.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                self.search.clear();
+            }
+        }
     }
 
     fn page_tabs(&mut self, ui: &mut Ui) {
@@ -1154,6 +1191,10 @@ mod tests {
             let text = painted(&failed);
             assert!(text.contains("retry"), "{size:?}: {text}");
             assert!(text.contains("503"), "{size:?}: {text}");
+            assert!(
+                text.lines().all(|l| l.trim().len() != 1 || !l.trim().chars().all(char::is_alphabetic)),
+                "{size:?}: single letter lines: {text}"
+            );
             let image = failed.render().unwrap();
             image.save(format!("/tmp/retry-{}x{}.png", size[0], size[1])).unwrap();
         }
