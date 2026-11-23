@@ -1069,7 +1069,6 @@ mod tests {
     use super::*;
     use egui_bench::update::{Asset, Updater, parse};
     use egui_kittest::Harness;
-    use egui_kittest::kittest::{NodeT, Queryable};
 
     fn hub() -> Hub {
         let ctx = egui::Context::default();
@@ -1242,6 +1241,11 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "updater-api-test")]
+    mod updater_api_test {
+    use super::*;
+    use egui_kittest::kittest::{NodeT, Queryable};
+
     fn release_server() -> (String, std::sync::Arc<std::sync::atomic::AtomicUsize>) {
         use std::io::{Read, Write};
         use std::sync::atomic::Ordering;
@@ -1306,6 +1310,7 @@ mod tests {
         h.run_steps(2);
         settle(&h.state().slots[i].updater);
         assert_eq!(assets.load(Ordering::SeqCst), 2);
+    }
     }
 
     #[test]
