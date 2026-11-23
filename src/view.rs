@@ -1069,6 +1069,7 @@ mod tests {
     use super::*;
     use egui_bench::update::{Asset, Updater, parse};
     use egui_kittest::Harness;
+    use egui_kittest::kittest::{NodeT, Queryable};
 
     fn hub() -> Hub {
         let ctx = egui::Context::default();
@@ -1239,6 +1240,72 @@ mod tests {
             let image = failed.render().unwrap();
             image.save(format!("/tmp/retry-{}x{}.png", size[0], size[1])).unwrap();
         }
+    }
+
+    fn release_server() -> (String, std::sync::Arc<std::sync::atomic::AtomicUsize>) {
+        use std::io::{Read, Write};
+        use std::sync::atomic::Ordering;
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let assets = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let seen = assets.clone();
+        std::thread::spawn(move || {
+            for mut stream in listener.incoming().flatten() {
+                let mut buf = [0u8; 2048];
+                let n = stream.read(&mut buf).unwrap_or(0);
+                let head = String::from_utf8_lossy(&buf[..n]).to_string();
+                if head.starts_with("GET /repos/v0l/battery-control/releases/latest ") {
+                    let body = format!(
+                        r#"{{"tag_name":"v9.9.9","assets":[{{"name":"battery-control-x86_64-unknown-linux-gnu.tar.gz","browser_download_url":"http://{addr}/asset","size":10}}]}}"#
+                    );
+                    let _ = write!(
+                        stream,
+                        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                        body.len()
+                    );
+                } else {
+                    seen.fetch_add(1, Ordering::SeqCst);
+                    let _ = stream.write_all(
+                        b"HTTP/1.1 503 Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+                    );
+                }
+            }
+        });
+        (format!("http://{addr}"), assets)
+    }
+
+    #[test]
+    fn clicking_retry_starts_one_more_install() {
+        use std::sync::atomic::Ordering;
+        let (api, assets) = release_server();
+        let mut hub = hub();
+        let i = hub_index(&hub);
+        hub.slots[i].exe = None;
+        hub.slots[i].updater = Updater::with_api(api, hub.slots[i].tool.repo, None);
+        let ctx = egui::Context::default();
+        hub.slots[i].updater.check(&ctx);
+        let started = Instant::now();
+        while hub.slots[i].updater.busy() && started.elapsed() < Duration::from_secs(10) {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        assert!(matches!(hub.slots[i].updater.state(), State::Newer(_)));
+
+        let mut h = render(hub, [1280.0, 800.0]);
+        let press = |h: &mut Harness<'_, Hub>, label: &str| {
+            h.get_all_by_label(label).find(|n| !n.accesskit_node().is_disabled()).unwrap().click();
+        };
+        press(&mut h, "install");
+        h.run_steps(2);
+        settle(&h.state().slots[i].updater);
+        h.run_steps(4);
+        assert_eq!(assets.load(Ordering::SeqCst), 1);
+        let text = painted(&h);
+        assert!(text.contains("retry") && text.contains("http status: 503"), "{text}");
+
+        press(&mut h, "retry");
+        h.run_steps(2);
+        settle(&h.state().slots[i].updater);
+        assert_eq!(assets.load(Ordering::SeqCst), 2);
     }
 
     #[test]
